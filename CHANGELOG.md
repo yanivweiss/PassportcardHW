@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.3.0] - 2023-04-07
+
+### Added
+- Enhanced README.md with comprehensive data science documentation:
+  - Added detailed data exploration and cleaning section
+  - Added in-depth feature engineering explanation
+  - Added model development and evaluation details
+  - Added model interpretability section
+  - Added business applications section
+  - Added limitations and assumptions documentation
+
 ## [1.2.0] - 2023-04-07
 
 ### Removed
