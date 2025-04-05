@@ -19,12 +19,6 @@ class TestNotebookGeneration(unittest.TestCase):
             'PassportCard_Business_Applications.ipynb',
         ]
         self.min_notebook_size = 1000  # Expected minimum size in bytes
-        
-    def test_notebooks_exist(self):
-        """Test that all expected notebooks exist"""
-        for notebook in self.expected_notebooks:
-            notebook_path = os.path.join(self.notebooks_dir, notebook)
-            self.assertTrue(os.path.exists(notebook_path), f"Notebook {notebook} does not exist")
     
     def test_notebook_content_size(self):
         """Test that notebooks have sufficient content"""

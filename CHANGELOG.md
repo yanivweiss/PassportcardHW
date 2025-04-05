@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.2.1] - 2023-04-05
+
+### Removed
+- Deleted `test_notebooks_exist` method from `tests/test_notebook_generation.py` to remove redundant notebook existence verification
+
 ## [3.2.0] - 2023-04-05
 
 ### Removed
