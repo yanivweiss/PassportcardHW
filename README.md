@@ -4,57 +4,20 @@ This repository contains a data science assignment for PassportCard insurance co
 
 ## Quick Start
 
-### Running with the Fix Scripts
+### Running the Project
 
-If you encounter issues with either model training or Jupyter startup, use the fix scripts:
+Run the main script to execute the analysis pipeline:
 
-1. **Fix all issues at once:**
-   ```
-   python passportcard_fix_all.py
-   ```
-
-2. **Run Jupyter with the fixed launcher:**
-   ```
-   python launch_jupyter.py
-   ```
-
-### Notebooks
-
-The project consists of three Jupyter notebooks that should be run in sequence:
-
-1. **1_PassportCard_Insurance_Claims_Prediction.ipynb**
-   - Data cleaning and exploratory data analysis
-
-2. **2_PassportCard_Model_Development.ipynb**  
-   - Feature engineering and model development
-   - *Note: If you encounter date conversion errors during model training, use the fix scripts*
-
-3. **3_PassportCard_Business_Applications.ipynb**
-   - Business insights and model applications
-
-## Common Issues & Solutions
-
-### Issue 1: Date Conversion Error in Model Training
-If you see error `TypeError: Cannot convert non-finite values (NA or inf) to integer` when training models:
-
-- Use our fix script: `python fix_manual.py`
-- Or manually edit the notebook to filter out date/object columns before model training
-
-### Issue 2: Jupyter Notebook.app Module Error
-If you see error `ModuleNotFoundError: No module named 'notebook.app'` when starting Jupyter:
-
-- Use our fix script: `python fix_jupyter.py`
-- Or launch Jupyter with our patched launcher: `python launch_jupyter.py`
+```
+python main.py
+```
 
 ## Project Structure
 
-- `/notebooks/`: Jupyter notebooks for the analysis
 - `/data/`: Input data files
-- Fix scripts:
-  - `passportcard_fix_all.py`: Comprehensive fix for all issues
-  - `fix_manual.py`: Fixes the model training issue
-  - `fix_jupyter.py`: Fixes the Jupyter notebook.app issue
-  - `launch_jupyter.py`: Reliable Jupyter launcher
+- `/src/`: Source code for the project
+- `/models/`: Trained model files
+- `/reports/`: Generated reports and visualizations
 
 ## Requirements
 
@@ -65,8 +28,6 @@ If you see error `ModuleNotFoundError: No module named 'notebook.app'` when star
   - matplotlib
   - seaborn
   - scikit-learn
-  - jupyter
-  - nbclassic (if using notebook interface)
 
 ## Installation
 
@@ -82,11 +43,8 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the fix script to ensure everything works
-python passportcard_fix_all.py
-
-# Launch Jupyter
-python launch_jupyter.py
+# Run the main script
+python main.py
 ```
 
 ## Project Overview
@@ -112,7 +70,6 @@ The system uses historical claims data and member information to predict the tot
 - [Limitations and Assumptions](#limitations-and-assumptions)
 - [Recent Updates](#recent-updates)
 - [License](#license)
-- [Interactive Jupyter Notebooks](#interactive-jupyter-notebooks)
 
 ## Project Structure
 
@@ -121,7 +78,6 @@ The system uses historical claims data and member information to predict the tot
 │   ├── raw/                # Raw data files
 │   └── processed/          # Processed data files
 ├── models/                 # Trained models
-├── notebooks/              # Jupyter notebooks
 ├── outputs/                # Output files
 │   ├── figures/            # Visualizations
 │   └── tables/             # Generated tables and reports
@@ -132,23 +88,6 @@ The system uses historical claims data and member information to predict the tot
 │   └── visualization/      # Visualization modules
 ├── tests/                  # Test files
 └── docs/                   # Documentation
-```
-
-## Installation
-
-To set up the project:
-
-```bash
-# Clone the repository
-git clone https://github.com/your-username/passportcard-insurance-claims.git
-cd passportcard-insurance-claims
-
-# Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows, use: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
 ```
 
 ## Data
@@ -1069,29 +1008,6 @@ The codebase has been significantly cleaned up and refactored to improve maintai
 4. **Improved Testing**: Added comprehensive tests for the consolidated pipeline in `tests/test_pipeline.py`.
 
 See the CHANGELOG.md for a full list of changes.
-
-## Interactive Jupyter Notebooks
-
-For a more interactive exploration of the project, we've created a set of Jupyter notebooks that allow you to run the analysis, visualize the data, and understand the model's predictions:
-
-1. **[PassportCard_Insurance_Claims_Prediction.ipynb](notebooks/PassportCard_Insurance_Claims_Prediction.ipynb)**: Main notebook covering data exploration and cleaning
-2. **[PassportCard_Model_Development.ipynb](notebooks/PassportCard_Model_Development.ipynb)**: Focuses on model development and evaluation
-3. **[PassportCard_Business_Applications.ipynb](notebooks/PassportCard_Business_Applications.ipynb)**: Demonstrates business applications of the model
-
-These notebooks provide:
-- Interactive visualizations
-- Step-by-step execution of the data processing and modeling pipeline
-- Detailed explanations of each analysis step
-- The ability to modify parameters and see immediate results
-
-To use these notebooks, ensure you have Jupyter installed:
-
-```bash
-pip install jupyter
-jupyter notebook
-```
-
-See [notebooks/README.md](notebooks/README.md) for more details.
 
 ## License
 

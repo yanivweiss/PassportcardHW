@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.3.0] - 2025-04-06
+
+### Removed
+- Deleted all Jupyter notebook files and related content:
+  - Removed all .ipynb files from notebooks directory
+  - Removed notebooks/.ipynb_checkpoints directory
+  - Removed .ipynb_checkpoints directory
+  - Deleted run_jupyter.py and fix_notebook.py scripts
+  - Removed notebooks directory
+- Updated requirements.txt to remove Jupyter dependencies:
+  - Removed notebook
+  - Removed jupyterlab
+  - Removed nbclassic
+  - Removed ipywidgets
+- Updated README.md to remove all references to Jupyter notebooks
+  - Updated project structure sections
+  - Updated installation and usage instructions
+  - Simplified project workflow
+
 ## [3.2.3] - 2023-04-06
 
 ### Fixed

@@ -76,7 +76,6 @@ shap_data = explain_model_with_shap(model, X_test, feature_names=X_test.columns)
 To improve code maintainability and reduce redundancy, the following cleanup will be performed:
 
 ### 1. Removal of Unused Files
-- Empty notebook files in the `notebooks/` directory
 - Redundant run scripts that duplicate functionality
 
 ### 2. Consolidation of Duplicate Code
