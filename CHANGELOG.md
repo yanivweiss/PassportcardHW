@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.0.0] - 2025-04-05
+
+### Added
+- Major data science workflow improvements:
+  - Organized project into standardized structure (data/, notebooks/, src/, models/, reports/)
+  - Created comprehensive EDA notebook with visualization and statistical analysis
+  - Implemented SHAP and other model explainability tools in src/models/model_explainability.py
+  - Added model validation module with temporal cross-validation in src/models/model_validation.py
+  - Created model comparison framework for evaluating multiple algorithms in src/models/model_comparison.py
+
+### Changed
+- Improved modeling approach with statistical rigor:
+  - Enhanced validation using temporal cross-validation
+  - Added learning curves and validation curves for hyperparameter analysis
+  - Implemented prediction error analysis for diagnostic insights
+  - Created feature importance comparison across models
+
 ## [2.0.1] - 2025-04-05
 
 ### Changed
