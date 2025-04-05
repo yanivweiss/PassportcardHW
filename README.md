@@ -67,7 +67,6 @@ These techniques significantly improve model performance, especially for predict
 ### 3. Modeling
 - **Model Selection**:
   - Implemented XGBoost regression model for predicting claim amounts
-  - Applied custom Focal Loss function to focus on hard-to-predict examples
   - Optimized hyperparameters using RandomizedSearchCV
   - Applied robust data preprocessing to handle NaN/infinity values
   - Created safeguards against data leakage in temporal data
@@ -77,7 +76,6 @@ These techniques significantly improve model performance, especially for predict
   - Implemented early stopping to prevent overfitting
   - Applied cross-validation for hyperparameter tuning
   - Used feature selection to reduce model complexity
-  - Applied SMOTE to handle imbalanced regression
 
 ### 4. Evaluation
 - **Performance Metrics**:
