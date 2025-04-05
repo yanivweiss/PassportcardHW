@@ -85,7 +85,7 @@ This project develops a predictive model for insurance claims at PassportCard. T
 ### Claims Distribution and Patterns
 
 #### Claims Over Time
-![Claims Over Time](claims_over_time.png)
+![Claims Over Time](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/claims_over_time.png)
 
 **Analysis:** This visualization shows the temporal distribution of claims throughout the observation period. Key insights include:
 - Clear seasonal patterns in claim submissions, with peaks typically occurring in winter months (December-February)
@@ -94,7 +94,7 @@ This project develops a predictive model for insurance claims at PassportCard. T
 - The pattern reveals that time-based features are critical for accurate prediction
 
 #### Claims Amount Distribution
-![Claims Distribution](claims_distribution.png)
+![Claims Distribution](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/claims_distribution.png)
 
 **Analysis:** This histogram shows the distribution of claim amounts:
 - The distribution is heavily right-skewed, with most claims being relatively small amounts (<$500)
@@ -105,7 +105,7 @@ This project develops a predictive model for insurance claims at PassportCard. T
 ### Customer Risk Profiling
 
 #### BMI Distribution
-![BMI Distribution](bmi_distribution.png)
+![BMI Distribution](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/bmi_distribution.png)
 
 **Analysis:** This visualization shows the distribution of BMI values across the member population:
 - Most members fall within the normal to overweight range (18.5-30)
@@ -116,7 +116,7 @@ This project develops a predictive model for insurance claims at PassportCard. T
 ### Model Performance and Insights
 
 #### Predictions vs Actual
-![Predictions vs Actual](predictions_vs_actual.png)
+![Predictions vs Actual](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/predictions_vs_actual.png)
 
 **Analysis:** This scatter plot compares the model's predictions against actual claim amounts:
 - The diagonal line represents perfect prediction; points close to this line indicate accurate predictions
@@ -125,7 +125,7 @@ This project develops a predictive model for insurance claims at PassportCard. T
 - This visualization helped validate our model's effectiveness and identify areas for improvement
 
 #### Feature Importance
-![Feature Importance](feature_importance.png)
+![Feature Importance](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/feature_importance.png)
 
 **Analysis:** This bar chart shows the top predictive features ranked by importance:
 - Questionnaire responses (particularly drinking habits) are surprisingly strong predictors
@@ -136,7 +136,7 @@ This project develops a predictive model for insurance claims at PassportCard. T
 ### XGBoost Model Analysis
 
 #### XGBoost Feature Importance
-![XGBoost Feature Importance](visualizations/xgboost_feature_importance.png)
+![XGBoost Feature Importance](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/visualizations/xgboost_feature_importance.png)
 
 **Analysis:** The XGBoost model's feature importance reveals:
 - Future claims log transformation is highly predictive, showing the importance of proper data preprocessing
@@ -145,7 +145,7 @@ This project develops a predictive model for insurance claims at PassportCard. T
 - The model effectively combines temporal, risk-based, and demographic features
 
 #### XGBoost Prediction Error Distribution
-![XGBoost Error Distribution](visualizations/xgboost_error_distribution.png)
+![XGBoost Error Distribution](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/visualizations/xgboost_error_distribution.png)
 
 **Analysis:** This histogram shows the distribution of prediction errors:
 - The distribution is approximately normal, centered near zero, indicating unbiased predictions
@@ -156,7 +156,7 @@ This project develops a predictive model for insurance claims at PassportCard. T
 ### Business Insights
 
 #### Risk Level Distribution
-![Risk Level Distribution](visualizations/business_insights/risk_level_distribution.png)
+![Risk Level Distribution](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/visualizations/business_insights/risk_level_distribution.png)
 
 **Analysis:** This pie chart shows the distribution of customers across risk levels:
 - The majority of members fall into the Medium risk category (38%)
@@ -165,7 +165,7 @@ This project develops a predictive model for insurance claims at PassportCard. T
 - The distribution informs resource allocation and prioritization strategies
 
 #### Risk Score Components by Level
-![Risk Components by Level](visualizations/business_insights/risk_components_by_level.png)
+![Risk Components by Level](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/visualizations/business_insights/risk_components_by_level.png)
 
 **Analysis:** This stacked bar chart shows how different risk components contribute to each risk level:
 - Chronic conditions contribute significantly to High and Very High risk levels
@@ -174,7 +174,7 @@ This project develops a predictive model for insurance claims at PassportCard. T
 - This breakdown helps target specific risk reduction programs to each segment
 
 #### Prediction Accuracy by Claim Range
-![Prediction Accuracy by Claim Range](visualizations/business_insights/prediction_accuracy_by_claim_range.png)
+![Prediction Accuracy by Claim Range](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/visualizations/business_insights/prediction_accuracy_by_claim_range.png)
 
 **Analysis:** This bar chart shows prediction accuracy across different claim amount ranges:
 - The model is most accurate for low to medium claim ranges ($0-$3000)
