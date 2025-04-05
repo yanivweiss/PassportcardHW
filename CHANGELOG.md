@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.2.0] - 2023-04-05
+
+### Removed
+- Removed all utility scripts starting with "fix_" prefix:
+  - fix_manual.py
+  - fix_jupyter.py
+  - fix_all_issues.py
+  - fix_jupyterpath.py
+  - fix_model_training.py
+  - fix_model_data_prep.py
+  - fix_notebook2_directly.py
+  - fix_notebook2_improved.py
+- Cleaned up repository structure by removing temporary fix scripts
+- Removed all jupyter-related files from root folder:
+  - jupyter_check.py
+  - run_jupyter.bat
+  - JUPYTER_GUIDE.md
+  - launch_jupyter.py
+  - run_jupyter.py
+
 ## [1.4.0] - 2023-04-05
 
 ### Added
