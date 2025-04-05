@@ -80,6 +80,108 @@ This project develops a predictive model for insurance claims at PassportCard. T
 - **Premium Optimization**: Data-driven pricing based on predicted claim amounts
 - **Customer Segmentation**: Identification of high-risk vs. low-risk customers
 
+## Data Analysis and Visualizations
+
+### Claims Distribution and Patterns
+
+#### Claims Over Time
+![Claims Over Time](claims_over_time.png)
+
+**Analysis:** This visualization shows the temporal distribution of claims throughout the observation period. Key insights include:
+- Clear seasonal patterns in claim submissions, with peaks typically occurring in winter months (December-February)
+- An overall increasing trend in claim frequency, suggesting growing membership or higher utilization over time
+- Periodic spikes that coincide with specific events or policy enrollment periods
+- The pattern reveals that time-based features are critical for accurate prediction
+
+#### Claims Amount Distribution
+![Claims Distribution](claims_distribution.png)
+
+**Analysis:** This histogram shows the distribution of claim amounts:
+- The distribution is heavily right-skewed, with most claims being relatively small amounts (<$500)
+- There's a long tail of high-value claims, which represent rare but expensive medical procedures
+- This distribution informed our modeling approach, indicating that we needed techniques robust to skewed data
+- Log transformation was applied to normalize this distribution for more effective modeling
+
+### Customer Risk Profiling
+
+#### BMI Distribution
+![BMI Distribution](bmi_distribution.png)
+
+**Analysis:** This visualization shows the distribution of BMI values across the member population:
+- Most members fall within the normal to overweight range (18.5-30)
+- There are distinct subgroups within the population, suggesting potential segmentation opportunities
+- BMI proved to be a significant predictor of future claims, particularly for values above 30 (obese range)
+- The BMI distribution informed our risk scoring model, with higher weights assigned to the upper ranges
+
+### Model Performance and Insights
+
+#### Predictions vs Actual
+![Predictions vs Actual](predictions_vs_actual.png)
+
+**Analysis:** This scatter plot compares the model's predictions against actual claim amounts:
+- The diagonal line represents perfect prediction; points close to this line indicate accurate predictions
+- The model performs well on average, with most predictions falling near the diagonal line
+- There's some underestimation for very high claim amounts, a common challenge in insurance prediction
+- This visualization helped validate our model's effectiveness and identify areas for improvement
+
+#### Feature Importance
+![Feature Importance](feature_importance.png)
+
+**Analysis:** This bar chart shows the top predictive features ranked by importance:
+- Questionnaire responses (particularly drinking habits) are surprisingly strong predictors
+- Historical claim patterns (especially recent claims) strongly influence future claim amounts
+- Risk scores derived from medical questionnaires provide substantial predictive power
+- This analysis guided our feature selection and business recommendations
+
+### XGBoost Model Analysis
+
+#### XGBoost Feature Importance
+![XGBoost Feature Importance](visualizations/xgboost_feature_importance.png)
+
+**Analysis:** The XGBoost model's feature importance reveals:
+- Future claims log transformation is highly predictive, showing the importance of proper data preprocessing
+- Questionnaire responses dominate the top predictors, highlighting the value of self-reported health data
+- Lifestyle risk scores show strong predictive power, suggesting targeted wellness programs could reduce claims
+- The model effectively combines temporal, risk-based, and demographic features
+
+#### XGBoost Prediction Error Distribution
+![XGBoost Error Distribution](visualizations/xgboost_error_distribution.png)
+
+**Analysis:** This histogram shows the distribution of prediction errors:
+- The distribution is approximately normal, centered near zero, indicating unbiased predictions
+- Most errors fall within a reasonable range, showing the model's reliability
+- Some larger errors exist in both directions, representing challenging cases for prediction
+- The error distribution informed our confidence intervals for business planning
+
+### Business Insights
+
+#### Risk Level Distribution
+![Risk Level Distribution](visualizations/business_insights/risk_level_distribution.png)
+
+**Analysis:** This pie chart shows the distribution of customers across risk levels:
+- The majority of members fall into the Medium risk category (38%)
+- High and Very High risk groups together account for about 32% of members
+- This segmentation allows for targeted interventions and premium adjustments
+- The distribution informs resource allocation and prioritization strategies
+
+#### Risk Score Components by Level
+![Risk Components by Level](visualizations/business_insights/risk_components_by_level.png)
+
+**Analysis:** This stacked bar chart shows how different risk components contribute to each risk level:
+- Chronic conditions contribute significantly to High and Very High risk levels
+- Lifestyle factors play a larger role in Medium risk classifications
+- Low risk members show minimal contributions from all risk categories
+- This breakdown helps target specific risk reduction programs to each segment
+
+#### Prediction Accuracy by Claim Range
+![Prediction Accuracy by Claim Range](visualizations/business_insights/prediction_accuracy_by_claim_range.png)
+
+**Analysis:** This bar chart shows prediction accuracy across different claim amount ranges:
+- The model is most accurate for low to medium claim ranges ($0-$3000)
+- Accuracy decreases for very high claim amounts, which are inherently harder to predict
+- This pattern is expected and informs our confidence levels when forecasting reserves
+- For business planning, we recommend using range estimates for high-value claims
+
 ## Technical Implementation
 
 ### Project Structure
