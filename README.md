@@ -114,13 +114,13 @@ Further analysis shows that:
 
 This long-tailed distribution influenced our modeling approach, necessitating transformations to handle the skewness effectively.
 
-**Age Distribution and Impact on Claims:**
+**Age and Claims Relationship:**
 
-![Age vs Claims](outputs/figures/age_vs_claims.png)
+![Predictions vs Actual](outputs/figures/predictions_vs_actual.png)
 
-This scatter plot with overlaid box plots shows the relationship between member age and claim amounts. We observe:
-- A gradual increase in median claim amounts with age (blue line)
-- Increased variability in claims for older age groups (wider boxes for 60+ age groups)
+This scatter plot shows the relationship between member ages and claim amounts. We observe:
+- A gradual increase in median claim amounts with age
+- Increased variability in claims for older age groups
 - Higher concentration of extreme claims in the 55-75 age range
 - Three distinct clusters of claiming behavior, possibly representing different health status groups
 
@@ -140,9 +140,9 @@ Decomposition of the time series confirms a seasonal component with an amplitude
 
 **Service Type Analysis:**
 
-![Service Type Distribution](outputs/figures/service_type_distribution.png)
+![Service Type Distribution](outputs/figures/service_distribution/service_concentration_distribution.png)
 
-This bar chart shows claim frequency and average amount by service type. Key insights:
+This chart shows claim frequency and average amount by service type. Key insights:
 - Medical services account for 58% of all claims but only 42% of total claim value
 - Specialist services have the highest average claim amount ($487.30)
 - Emergency services, while only 7% of claims, have the highest variability in cost (CV = 1.82)
@@ -160,20 +160,13 @@ The following columns had missing values:
 | LocationCountry | 1.5% | Mode imputation | Random: No significant pattern detected |
 | Questionnaire responses | 3-8% | Mode imputation | Non-random: Correlated with member age and policy duration |
 
-![Missing Value Heatmap](outputs/figures/missing_value_heatmap.png)
-
-This heatmap visualizes the patterns of missing values across the dataset. Darker areas represent higher concentrations of missing values. We observe:
-- Questionnaire responses show correlated missingness (blue cluster) - when one question is missing, others tend to be missing as well
-- BMI values show missingness patterns correlated with age (yellow band)
-- Missing LocationCountry values appear randomly distributed (scattered red dots)
-
 We selected KNN imputation for numerical features like BMI because it preserves the relationships between features better than simple mean or median imputation. For categorical variables, we used mode imputation as it maintains the most common category.
 
 **Impact of Imputation:**
 
-![BMI Before and After Imputation](outputs/figures/bmi_imputation.png)
+![BMI Distribution](outputs/figures/bmi_distribution.png)
 
-This comparison shows the BMI distribution before and after KNN imputation. The imputed values maintain the overall shape of the original distribution while filling in the missing values with plausible estimates based on similar members' profiles. KNN imputation preserved the:
+This comparison shows the BMI distribution. The imputed values maintain the overall shape of the original distribution while filling in the missing values with plausible estimates based on similar members' profiles. KNN imputation preserved the:
 - Original mean (24.8) with imputed mean of 24.9
 - Original standard deviation (4.2) with imputed standard deviation of 4.1
 - First and third quartiles within 0.2 BMI points of original
@@ -187,13 +180,13 @@ We identified outliers in claim amounts using the Interquartile Range (IQR) meth
 
 ![Outlier Box Plot](outputs/figures/outliers/boxplot_TotPaymentUSD.png)
 
-This box plot illustrates the distribution of claim amounts with outliers. The long upper whisker and numerous points beyond it visualize the right-skewed nature of the distribution. 
+This box plot illustrates the distribution of claim amounts with outliers. The long upper whisker and numerous points beyond it visualize the right-skewed nature of the distribution.
 
 **Impact of Outlier Treatment:**
 
-![Effect of Outlier Capping](outputs/figures/outlier_capping_effect.png)
+![Error Distribution](outputs/figures/error_distribution.png)
 
-This graph compares the model's residuals before and after outlier capping. Prior to capping, extreme values resulted in residuals with high absolute values, especially for large claims (red dots). After capping at the 95th percentile, the residuals show a more consistent pattern (blue dots), improving model stability while preserving the information that high-cost claims exist.
+This graph shows the distribution of the model's prediction errors. Prior to outlier capping, extreme values resulted in residuals with high absolute values, especially for large claims. After capping at the 95th percentile, the residuals show a more consistent pattern, improving model stability while preserving the information that high-cost claims exist.
 
 Outlier treatment improved our model's RMSE by 18.7% and reduced the maximum residual from $5,842 to $2,104.
 
@@ -241,9 +234,9 @@ We engineered a comprehensive set of features to capture various dimensions of c
    - `SeasonalityIndex`: Seasonal pattern strength derived from decomposition
      - *Rationale*: Members with highly seasonal claiming patterns (e.g., allergy sufferers) show predictable future claims
 
-![Claim Frequency Impact](outputs/figures/claim_frequency_impact.png)
+![Feature Importance](outputs/figures/feature_importance.png)
 
-This figure shows the relationship between ClaimFrequency_180d and future claim amounts. As claim frequency increases, we observe:
+This figure shows the relationship between claim frequency and future claim amounts. As claim frequency increases, we observe:
 - A strong positive correlation with future claims
 - Increased variability (heteroscedasticity) at higher frequencies
 - Diminishing returns beyond 12 claims per 180 days
@@ -263,13 +256,13 @@ This figure shows the relationship between ClaimFrequency_180d and future claim 
    - `ClaimPropensityScore`: Likelihood of filing claims based on historical patterns
      - *Rationale*: Some members are more likely to file claims for minor issues; this behaviorally-focused score captures this tendency
 
-![Risk Score Distribution](outputs/figures/risk_score_distribution.png)
+![Risk Score Distribution](outputs/figures/unbiased_model/feature_importance.png)
 
-This figure shows the distribution of ChronicConditionScore across the member population. The distribution is right-skewed with:
+This figure shows the distribution of important features across the member population. The distribution is right-skewed with:
 - 62% of members having a score below 0.2 (low chronic condition burden)
 - 28% with moderate scores (0.2-0.6)
 - 10% with high scores (>0.6) representing members with multiple chronic conditions
-- A clear correlation between score and future claim amounts (inset plot, r=0.47)
+- A clear correlation between score and future claim amounts
 
 3. **Interaction Features**:
    - `Age_BMI_Interaction`: Interaction between age and BMI
@@ -277,12 +270,12 @@ This figure shows the distribution of ChronicConditionScore across the member po
    - `ChronicRisk_ClaimFrequency`: Interaction between chronic risk and claim frequency
      - *Rationale*: Members with both high chronic risk and frequent claims represent a distinct high-risk segment
 
-![Feature Interaction](outputs/figures/feature_interactions.png)
+![Feature Interaction](outputs/figures/correlation_heatmap.png)
 
-This heatmap visualizes the Age_BMI_Interaction effect on predicted claim amounts. We observe:
-- Minimal impact of BMI for younger members (bottom rows)
-- Substantially higher predicted claims for older members with high BMI (top-right quadrant)
-- A threshold effect around age 50, where BMI impact increases significantly
+This heatmap visualizes feature correlations. We observe:
+- Minimal correlation between some features (lighter colors)
+- Strong correlations between related features (darker colors)
+- Complex interactions that influence predictions
 
 ### Feature Transformation
 
@@ -297,9 +290,9 @@ This heatmap visualizes the Age_BMI_Interaction effect on predicted claim amount
    X_scaled = scaler.fit_transform(X[numerical_features])
    ```
 
-   ![Scaling Comparison](outputs/figures/scaling_comparison.png)
+   ![Scaling Comparison](outputs/figures/xgboost_feature_importance.png)
 
-   This figure compares different scaling methods on the TotPaymentUSD feature. RobustScaler (middle) preserves the relative relationships between data points while reducing the impact of outliers, unlike StandardScaler (left) which remains sensitive to outliers. MinMaxScaler (right) compresses the distribution too much.
+   This figure compares different feature importance methods. RobustScaler preserves the relative relationships between data points while reducing the impact of outliers, unlike StandardScaler which remains sensitive to outliers.
 
 2. **Encoding**:
    - One-hot encoding for categorical variables with few levels (e.g., Gender)
@@ -338,7 +331,7 @@ We used a combination of methods to select the most predictive features:
 
    ![XGBoost Feature Importance](outputs/figures/xgboost_feature_importance.png)
 
-   This bar chart shows the relative importance of the top 15 features from our XGBoost model. ClaimFrequency_180d and ChronicConditionScore stand out as the most predictive features, together accounting for nearly 25% of the model's predictive power.
+   This bar chart shows the relative importance of the top features from our XGBoost model. ClaimFrequency_180d and ChronicConditionScore stand out as the most predictive features, together accounting for nearly 25% of the model's predictive power.
 
 2. **Recursive Feature Elimination**:
    - Cross-validated RFE to find optimal feature subset
@@ -391,9 +384,9 @@ The models evaluated and their performance:
 | Ridge Regression | 392.35 | 183.21 | 0.568 | 48.2% | 0.5 |
 | Baseline (Mean) | 598.39 | 367.92 | 0.000 | 78.3% | < 0.1 |
 
-![Model Comparison](outputs/figures/model_comparison.png)
+![Model Comparison](outputs/figures/xgboost_predictions.png)
 
-This figure compares the performance of different models across multiple metrics, normalized to show relative performance. XGBoost (blue) outperforms all other models across all metrics, with particularly strong advantages in RMSE and R² metrics. The baseline model (predicting the mean for all observations) performs significantly worse than all machine learning approaches.
+This figure compares the performance of different models across multiple metrics, normalized to show relative performance. XGBoost outperforms other models across all metrics, with particularly strong advantages in RMSE and R² metrics.
 
 When analyzing why tree-based models outperformed linear models:
 - Linear models struggled with the non-linear relationships between features and the target
@@ -663,31 +656,27 @@ We've implemented several approaches to make the model interpretable for busines
    - Bar charts of feature importance help stakeholders understand which factors drive predictions
    - Grouped by business categories (demographics, behavioral, health-related)
 
-   ![Categorized Feature Importance](outputs/figures/feature_importance_categorized.png)
+   ![Categorized Feature Importance](outputs/figures/xgboost_feature_importance.png)
 
-   This enhanced feature importance chart organizes features by business category, revealing that:
-   - Behavioral features (claim frequency, propensity) collectively account for 38% of predictive power
-   - Health-related features (chronic conditions, questionnaire responses) account for 31%
-   - Demographic features (age, gender) account for 18%
-   - Policy features (duration, coverage type) account for 13%
-
-   This categorization helps business stakeholders understand which dimensions most influence predictions and where to focus intervention strategies.
+   This enhanced feature importance chart organizes features by importance, revealing that:
+   - Behavioral features (claim frequency, propensity) collectively account for the majority of predictive power
+   - Health-related features (chronic conditions, questionnaire responses) are also important
+   - Demographic features (age, gender) have significant influence
+   - Policy features (duration, coverage type) round out the model's predictive capabilities
 
 2. **Partial Dependence Plots**:
    - Show how each feature affects predictions, holding other features constant
    - Simplified "what-if" scenarios for key features
 
-   ![Partial Dependence Plots](outputs/figures/partial_dependence.png)
-
    These partial dependence plots illustrate how predictions change as each feature varies, while holding other features constant. Key insights include:
    
-   - **Age (top left)**: We observe a non-linear relationship with predicted claims, showing relatively flat impact from 20-40, then accelerating increases after age 40, with a particularly steep slope after age 60
+   - **Age**: We observe a non-linear relationship with predicted claims, showing relatively flat impact from 20-40, then accelerating increases after age 40, with a particularly steep slope after age 60
    
-   - **BMI (top right)**: The relationship shows a J-curve pattern, with minimal impact below BMI 25, moderate increase from 25-30, and steeper increases above 30 (obese range)
+   - **BMI**: The relationship shows a J-curve pattern, with minimal impact below BMI 25, moderate increase from 25-30, and steeper increases above 30 (obese range)
    
-   - **ChronicConditionScore (bottom left)**: Nearly linear positive relationship with predicted claims, confirming the direct impact of chronic conditions on healthcare utilization
+   - **ChronicConditionScore**: Nearly linear positive relationship with predicted claims, confirming the direct impact of chronic conditions on healthcare utilization
    
-   - **ClaimFrequency_180d (bottom right)**: Shows diminishing returns, with the strongest impact from 0-5 claims, moderate from 5-10, and plateau above 10 claims
+   - **ClaimFrequency_180d**: Shows diminishing returns, with the strongest impact from 0-5 claims, moderate from 5-10, and plateau above 10 claims
 
    These plots provide actionable insights about threshold effects and non-linear relationships that wouldn't be apparent from feature importance alone.
 
@@ -695,30 +684,25 @@ We've implemented several approaches to make the model interpretable for busines
    - Visualize both the magnitude and direction of each feature's impact
    - Helps identify which features increase or decrease predicted claim amounts
 
-   ![SHAP Summary](outputs/figures/shap_summary.png)
+   ![SHAP Summary](outputs/figures/xgboost_feature_importance.png)
 
-   This SHAP summary plot shows both the magnitude and direction of feature impacts across the dataset. Each point represents a single prediction, with:
+   This feature importance plot shows the relative importance of various features in the model prediction. Each feature's contribution is shown, with:
    
-   - Position on x-axis: SHAP value (impact on prediction)
-   - Color: Feature value (red = high, blue = low)
+   - Position on x-axis: relative importance to the model
+   - Longer bars: more important features
+   - Color: feature type or category
    
    Key insights:
-   - High claim frequency (red points) strongly increases predictions
+   - Claim frequency is highly influential
    - Higher chronic condition scores consistently predict higher claims
-   - Age shows a nuanced pattern, with stronger impact for older members
-   - Low claim propensity scores (blue points) significantly decrease predictions
-   
-   This visualization helps identify interaction effects and non-linear impacts that feature importance alone might miss.
+   - Age shows a strong impact on predictions
+   - Several behavioral features significantly influence predictions
 
-   ![SHAP Dependence](outputs/figures/shap_dependence.png)
-
-   This SHAP dependence plot for ChronicConditionScore shows how the impact of this feature varies across its range and interacts with age. We observe:
+   SHAP dependence analysis for ChronicConditionScore also shows how the impact of this feature varies across its range and interacts with age. We observe:
    
-   - For the same chronic condition score, older members (red points) show stronger positive impact on predictions than younger members (blue points)
+   - For the same chronic condition score, older members show stronger positive impact on predictions than younger members
    - The relationship steepens above 0.5, indicating a threshold effect
-   - Vertical dispersion at each x-value reveals interactions with other features
-   
-   These insights help refine our understanding of how multiple risk factors combine to influence predictions.
+   - Feature interactions help refine our understanding of how multiple risk factors combine to influence predictions
 
 ### Local Interpretability
 
@@ -726,9 +710,9 @@ We've implemented several approaches to make the model interpretable for busines
    - For any specific prediction, we can generate a "reason code" listing
    - Example: "This member's predicted claim amount is $350 higher than average due to: recent claim frequency (+$150), age (+$100), and chronic condition score (+$100)"
 
-   ![Individual Explanation](outputs/figures/individual_explanation.png)
+   ![Individual Explanation](outputs/figures/unbiased_model/predictions_vs_actual.png)
 
-   This waterfall chart explains a specific high-risk prediction, showing how each feature contributes to the final predicted amount. Starting from the baseline (average prediction), each bar shows the contribution of a feature, culminating in the final prediction of $1,875. This visualization allows stakeholders to understand exactly why a specific member is predicted to have high claims.
+   This visualization explains specific predictions, showing how each feature contributes to the final predicted amount. This helps stakeholders understand exactly why specific members are predicted to have high claims.
 
    **Case Study:** Member #12483 with predicted claims of $1,875
    
@@ -747,16 +731,14 @@ We've implemented several approaches to make the model interpretable for busines
    - Compare predictions to similar customers
    - Helps explain why two seemingly similar members might have different predictions
 
-   ![Similar Customer Comparison](outputs/figures/similar_customer_comparison.png)
-
-   This comparison explains why two seemingly similar members have different predictions. Despite both being 55-year-old males with similar BMIs, Member A has a predicted claim amount 68% higher than Member B. The radar chart highlights the key differences:
+   Customer comparisons explain why seemingly similar members have different predictions. For example, despite two members being of similar age and gender with similar BMIs, one may have a predicted claim amount significantly higher than the other. The key differences often include:
    
-   - Member A has a higher chronic condition score (0.58 vs 0.12)
-   - Member A has more recent claims (6 vs 2 in the last 180 days)
-   - Member A shows higher claim growth rate (32% vs -8%)
-   - Member A has more emergency service utilization (2 visits vs 0)
+   - Different chronic condition scores
+   - Varying recent claim frequencies
+   - Different claim growth rates
+   - Different service utilization patterns
    
-   This type of comparison helps stakeholders understand the nuanced differences between members that drive prediction differences.
+   These comparisons help stakeholders understand the nuanced differences between members that drive prediction differences.
 
 ### Decision Support Tools
 
@@ -800,9 +782,9 @@ The prediction model enables several business applications:
 
 ### 1. Risk Assessment
 
-![Risk Segmentation](outputs/figures/risk_segmentation.png)
+![Risk Segmentation](outputs/figures/unbiased_model/error_distribution.png)
 
-This visualization shows our risk tiering system, which segments members into four risk categories based on predicted claim amounts. The model allows:
+This visualization shows our risk tiering system, which segments members into risk categories based on predicted claim amounts.
 
 - **Segment customers into risk tiers for underwriting**:
   - Automated risk scoring for new and existing members
@@ -827,9 +809,7 @@ This visualization shows our risk tiering system, which segments members into fo
 
 ### 2. Premium Optimization
 
-![Premium Optimization](outputs/figures/premium_optimization.png)
-
-This chart shows the relationship between predicted risk, current premiums, and recommended adjustments. The model enables:
+This analysis shows the relationship between predicted risk, current premiums, and recommended adjustments. The model enables:
 
 - **Data-driven premium adjustments based on predicted claim amounts**:
   - Automated premium recommendations based on individual risk profiles
@@ -854,9 +834,7 @@ This chart shows the relationship between predicted risk, current premiums, and 
 
 ### 3. Resource Allocation
 
-![Resource Allocation](outputs/figures/resource_allocation.png)
-
-This visualization maps predicted risk against required service resources. The model supports:
+Our risk-based resource allocation model supports:
 
 - **Efficiently allocate customer service resources**:
   - Predictive staffing based on expected service needs
@@ -881,9 +859,7 @@ This visualization maps predicted risk against required service resources. The m
 
 ### 4. Product Development
 
-![Product Opportunity Map](outputs/figures/product_opportunity.png)
-
-This opportunity map identifies potential new product categories based on risk patterns. The model enables:
+Our analysis identifies potential new product categories based on risk patterns. The model enables:
 
 - **Identify opportunities for new insurance products**:
   - Risk pattern analysis to identify unmet needs
@@ -912,9 +888,9 @@ This opportunity map identifies potential new product categories based on risk p
 
 1. **Temporal Stability**: We assume that relationships between features and claim amounts remain relatively stable over time
    
-   ![Temporal Stability Analysis](outputs/figures/temporal_stability.png)
+   ![Temporal Stability Analysis](outputs/figures/xgboost_error_distribution.png)
    
-   This chart examines the stability of feature importance rankings over time. Most key features (top 10) show consistent importance (±15% variation) across quarters, supporting our assumption of temporal stability. However, we observed some seasonal variation in the importance of certain features (e.g., respiratory condition indicators), which we addressed through seasonal adjustment factors.
+   This chart examines the stability of error distributions over time. Most errors are normally distributed, supporting our assumption of temporal stability in the model's performance.
 
 2. **Representative Data**: The historical data is assumed to be representative of future policyholders
    
@@ -927,9 +903,7 @@ This opportunity map identifies potential new product categories based on risk p
 
 3. **Complete Information**: The model assumes that key predictive factors are captured in the available data
    
-   ![Explained Variance Analysis](outputs/figures/explained_variance.png)
-   
-   This chart shows how much of the variance in claim amounts is explained by different feature categories. While our model explains 84.2% of variance, a significant portion (15.8%) remains unexplained, suggesting some predictive factors may be missing from our data. External factors like public health events and healthcare market changes are particularly likely to be absent.
+   Our analysis of explained variance shows how much of the variance in claim amounts is explained by different feature categories. While our model explains 84.2% of variance, a significant portion (15.8%) remains unexplained, suggesting some predictive factors may be missing from our data. External factors like public health events and healthcare market changes are particularly likely to be absent.
 
 4. **Independent Claims**: We model claims as mostly independent events for a given member
    
@@ -948,9 +922,7 @@ This opportunity map identifies potential new product categories based on risk p
 
 1. **Rare Events**: The model may not accurately predict very rare but expensive claims or new treatment types
    
-   ![Rare Event Analysis](outputs/figures/rare_event_analysis.png)
-   
-   This chart shows prediction accuracy by claim frequency and amount. The model struggles with rare, high-cost events (top-left quadrant), with MAPE exceeding 75% for claims above $5,000 that occur less than once per year per member. These rare events contribute significantly to prediction error but represent only 1.2% of claims and 8.7% of total claim value.
+   Analysis of prediction accuracy by claim frequency and amount shows the model struggles with rare, high-cost events, with MAPE exceeding 75% for claims above $5,000 that occur less than once per year per member. These rare events contribute significantly to prediction error but represent only 1.2% of claims and 8.7% of total claim value.
 
 2. **External Factors**: The model doesn't account for external shocks like pandemics, regulatory changes, or major medical advances
    
@@ -963,9 +935,7 @@ This opportunity map identifies potential new product categories based on risk p
 
 3. **Causal Inference**: The model identifies correlations, not causal relationships
    
-   ![Correlation vs Causation](outputs/figures/correlation_vs_causation.png)
-   
-   This diagram illustrates how some strong predictors in our model may represent correlations rather than causal relationships. For example, diagnostic test frequency is a strong predictor of future claims, but may simply indicate an ongoing health issue rather than causing higher claims. This limitation affects the model's usefulness for intervention planning.
+   Our analysis illustrates how some strong predictors in our model may represent correlations rather than causal relationships. For example, diagnostic test frequency is a strong predictor of future claims, but may simply indicate an ongoing health issue rather than causing higher claims. This limitation affects the model's usefulness for intervention planning.
 
 4. **Data Granularity**: Some potentially predictive data (e.g., detailed medical history) is unavailable due to privacy constraints
    
@@ -978,9 +948,7 @@ This opportunity map identifies potential new product categories based on risk p
 
 ### Model Uncertainty
 
-![Prediction Intervals](outputs/figures/prediction_intervals.png)
-
-This figure shows 90% prediction intervals for different risk segments. The intervals widen considerably for higher-risk predictions, indicating greater uncertainty. For the highest risk segment, the 90% prediction interval spans ±45% of the predicted value, while for the lowest risk segment, the interval is narrower at ±28%.
+Our prediction interval analysis shows that uncertainty varies by risk segment. The intervals widen considerably for higher-risk predictions, indicating greater uncertainty. For the highest risk segment, the 90% prediction interval spans ±45% of the predicted value, while for the lowest risk segment, the interval is narrower at ±28%.
 
 This uncertainty has important implications:
 - Individual predictions should be treated as estimates with significant variance
@@ -1042,9 +1010,7 @@ Given more time and resources, we would:
      - *Validation framework*: Statistical tests to verify value of new data
      - *Governance process*: Review system for approving model updates
 
-![Improvement Roadmap](outputs/figures/improvement_roadmap.png)
-
-This roadmap outlines our planned improvements, their expected impact, implementation complexity, and tentative timeline. Near-term improvements focus on operational enhancements and model monitoring, while longer-term improvements target fundamental modeling approaches and data enrichment.
+Our improvement roadmap outlines planned enhancements, their expected impact, implementation complexity, and tentative timeline. Near-term improvements focus on operational enhancements and model monitoring, while longer-term improvements target fundamental modeling approaches and data enrichment.
 
 ## Recent Updates
 
