@@ -442,21 +442,7 @@
     "        if col not in [target_col, 'Log_' + target_col, 'Member_ID', 'PolicyID']\n",
     "    ]\n",
     "    \n",
-    "    X = data[feature_cols]
-    
-    # Critical fix: Filter out non-numeric columns before model training
-    print('Original X shape:', X.shape)
-    date_cols = X.select_dtypes(include=['object', 'datetime64']).columns.tolist()
-    print('Removing non-numeric columns:', date_cols)
-    X = X.select_dtypes(include=['int64', 'float64'])
-    print('New X shape after removing non-numeric columns:', X.shape)
-    
-    # Critical fix: Filter out non-numeric columns before model training
-    print('Original X shape:', X.shape)
-    date_cols = X.select_dtypes(include=['object', 'datetime64']).columns.tolist()
-    print('Removing non-numeric columns:', date_cols)
-    X = X.select_dtypes(include=['int64', 'float64'])
-    print('New X shape after removing non-numeric columns:', X.shape)\n",
+    "    X = data[feature_cols]\n",
     "    y = data[y_col]\n",
     "    \n",
     "    # Critical fix: Filter out non-numeric columns before model training\n",
@@ -585,21 +571,7 @@
     "    print(f\"X_train shape after type checking: {X_train.shape}\")\n",
     "    \n",
     "    # Train the model\n",
-    "    # Ensure data types are numeric only (fail-safe check)
-    print(f"Checking {name} input data types...")
-    X_train = X_train.select_dtypes(include=['number'])
-    X_test = X_test.select_dtypes(include=['number'])
-    print(f"X_train shape after type checking: {X_train.shape}")
-    
-    # Train the model
-    # Ensure data types are numeric only (fail-safe check)
-    print(f"Checking {name} input data types...")
-    X_train = X_train.select_dtypes(include=['number'])
-    X_test = X_test.select_dtypes(include=['number'])
-    print(f"X_train shape after type checking: {X_train.shape}")
-    
-    # Train the model
-    model.fit(X_train, y_train)\n",
+    "    model.fit(X_train, y_train)\n",
     "    \n",
     "    # Calculate training time\n",
     "    train_time = time.time() - start_time\n",
