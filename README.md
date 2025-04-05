@@ -221,7 +221,7 @@ These techniques significantly improve model performance, especially for predict
 - More realistic performance estimation for time-series data
 
 #### Error Analysis Heatmap
-![Error Heatmap](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/visualizations/error_analysis/error_heatmap_Feature1_Feature2.png)
+![Error Heatmap](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/visualizations/error_analysis/error_vs_feature1.png)
 
 **Analysis:** This heatmap reveals:
 - Areas of the feature space where prediction errors are highest
