@@ -5,10 +5,11 @@ import seaborn as sns
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.metrics import confusion_matrix, classification_report
 import os
+from scipy import stats as scipy_stats
 
 def analyze_prediction_errors(y_true, y_pred, feature_matrix=None, feature_names=None):
     """
-    Comprehensive analysis of prediction errors
+    Analyze prediction errors and their relationship with feature values
     
     Parameters:
     -----------
@@ -16,208 +17,126 @@ def analyze_prediction_errors(y_true, y_pred, feature_matrix=None, feature_names
         True target values
     y_pred : array-like
         Predicted target values
-    feature_matrix : array-like or DataFrame, optional
-        Feature matrix for additional analysis
+    feature_matrix : pandas DataFrame, optional
+        Feature matrix used for predictions
     feature_names : list, optional
-        Names of features in feature_matrix
+        List of feature names
         
     Returns:
     --------
     dict
         Dictionary with error analysis results
     """
-    # Create output directory
-    os.makedirs('visualizations/error_analysis', exist_ok=True)
-    
-    # Basic error metrics
-    mse = mean_squared_error(y_true, y_pred)
-    rmse = np.sqrt(mse)
-    mae = mean_absolute_error(y_true, y_pred)
-    r2 = r2_score(y_true, y_pred)
-    
     # Calculate errors
-    errors = y_pred - y_true
+    errors = y_true - y_pred
     abs_errors = np.abs(errors)
+    squared_errors = errors ** 2
     
-    # Error statistics
+    # Basic error statistics
     error_stats = {
-        'MSE': mse,
-        'RMSE': rmse,
-        'MAE': mae,
-        'R²': r2,
-        'Mean Error': np.mean(errors),
-        'Median Error': np.median(errors),
-        'Min Error': np.min(errors),
-        'Max Error': np.max(errors),
-        'Error Std Dev': np.std(errors)
+        'mean_error': np.mean(errors),
+        'median_error': np.median(errors),
+        'mean_abs_error': np.mean(abs_errors),
+        'median_abs_error': np.median(abs_errors),
+        'rmse': np.sqrt(np.mean(squared_errors)),
+        'max_abs_error': np.max(abs_errors)
     }
     
-    # Create error distribution plot
+    # Create output directory if it doesn't exist
+    os.makedirs('visualizations/error_analysis', exist_ok=True)
+    
+    # Plot error distribution
     plt.figure(figsize=(10, 6))
     sns.histplot(errors, kde=True)
-    plt.axvline(x=0, color='r', linestyle='--')
-    plt.title('Distribution of Prediction Errors')
-    plt.xlabel('Prediction Error (Predicted - Actual)')
+    plt.xlabel('Prediction Error')
     plt.ylabel('Frequency')
-    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.title('Distribution of Prediction Errors')
+    plt.tight_layout()
     plt.savefig('visualizations/error_analysis/error_distribution.png')
     plt.close()
     
-    # Create scatter plot of actual vs predicted values
-    plt.figure(figsize=(10, 6))
-    plt.scatter(y_true, y_pred, alpha=0.5)
+    # If feature matrix is provided, analyze errors by feature
+    feature_error_corr = {}
+    top_error_correlated_features = []
+    error_by_feature_bins = {}
     
-    # Add perfect prediction line
-    min_val = min(np.min(y_true), np.min(y_pred))
-    max_val = max(np.max(y_true), np.max(y_pred))
-    plt.plot([min_val, max_val], [min_val, max_val], 'r--')
-    
-    plt.title('Actual vs Predicted Values')
-    plt.xlabel('Actual Values')
-    plt.ylabel('Predicted Values')
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.savefig('visualizations/error_analysis/actual_vs_predicted.png')
-    plt.close()
-    
-    # Create residual plot
-    plt.figure(figsize=(10, 6))
-    plt.scatter(y_pred, errors, alpha=0.5)
-    plt.axhline(y=0, color='r', linestyle='--')
-    plt.title('Residual Plot')
-    plt.xlabel('Predicted Values')
-    plt.ylabel('Residual (Predicted - Actual)')
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.savefig('visualizations/error_analysis/residual_plot.png')
-    plt.close()
-    
-    # Create Q-Q plot
-    plt.figure(figsize=(10, 6))
-    stats = pd.Series(errors).sort_values()
-    # Calculate theoretical quantiles
-    n = len(stats)
-    qs = np.linspace(0, 1, n+1)[1:-1]  # quantiles, excluding 0 and 1
-    theoretical_quantiles = stats.mean() + stats.std() * np.sqrt(2) * np.array([stats.ppf(q) for q in qs])
-    
-    plt.scatter(theoretical_quantiles, stats, alpha=0.5)
-    plt.plot([stats.min(), stats.max()], [stats.min(), stats.max()], 'r--')
-    plt.title('Q-Q Plot of Residuals')
-    plt.xlabel('Theoretical Quantiles')
-    plt.ylabel('Sample Quantiles')
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.savefig('visualizations/error_analysis/qq_plot.png')
-    plt.close()
-    
-    # Analyze errors by prediction magnitude
-    if np.min(y_true) >= 0:  # Only for non-negative targets
-        # Create bins for prediction magnitude
-        bins = 5
-        y_true_bins = pd.qcut(y_true, bins, labels=False, duplicates='drop')
-        bin_errors = pd.DataFrame({
-            'bin': y_true_bins,
-            'actual': y_true,
-            'predicted': y_pred,
-            'error': errors,
-            'abs_error': abs_errors
-        })
-        
-        # Calculate average error by bin
-        bin_stats = bin_errors.groupby('bin').agg({
-            'actual': ['mean', 'count'],
-            'error': ['mean', 'std'],
-            'abs_error': 'mean'
-        })
-        
-        # Flatten column names
-        bin_stats.columns = ['_'.join(col).strip() for col in bin_stats.columns.values]
-        
-        # Create plot of error by prediction magnitude
-        plt.figure(figsize=(12, 6))
-        
-        # Plot mean absolute error by bin
-        plt.subplot(1, 2, 1)
-        plt.bar(bin_stats.index, bin_stats['abs_error_mean'])
-        plt.title('Mean Absolute Error by Actual Value Quantile')
-        plt.xlabel('Actual Value Quantile')
-        plt.ylabel('Mean Absolute Error')
-        plt.xticks(bin_stats.index)
-        plt.grid(True, linestyle='--', alpha=0.7)
-        
-        # Plot mean error by bin (to show bias)
-        plt.subplot(1, 2, 2)
-        plt.bar(bin_stats.index, bin_stats['error_mean'])
-        plt.axhline(y=0, color='r', linestyle='--')
-        plt.title('Mean Error by Actual Value Quantile')
-        plt.xlabel('Actual Value Quantile')
-        plt.ylabel('Mean Error')
-        plt.xticks(bin_stats.index)
-        plt.grid(True, linestyle='--', alpha=0.7)
-        
-        plt.tight_layout()
-        plt.savefig('visualizations/error_analysis/error_by_magnitude.png')
-        plt.close()
-    
-    # Analyze feature-error relationships if features are provided
     if feature_matrix is not None and feature_names is not None:
-        # Convert feature matrix to DataFrame if it's not already
-        if not isinstance(feature_matrix, pd.DataFrame):
-            feature_matrix = pd.DataFrame(feature_matrix, columns=feature_names)
+        # Prepare feature matrix
+        if isinstance(feature_matrix, pd.DataFrame):
+            X = feature_matrix.copy()
+        else:
+            X = pd.DataFrame(feature_matrix, columns=feature_names)
         
-        # Add errors to feature matrix
-        feature_matrix = feature_matrix.copy()
-        feature_matrix['error'] = errors
-        feature_matrix['abs_error'] = abs_errors
+        # Add errors to the feature matrix
+        X['error'] = errors
+        X['abs_error'] = abs_errors
         
         # Calculate correlation between features and errors
-        error_correlations = feature_matrix.corr()['error'].sort_values(ascending=False)
-        abs_error_correlations = feature_matrix.corr()['abs_error'].sort_values(ascending=False)
+        error_corr = X.corr()['error'].drop(['error', 'abs_error']).sort_values(ascending=False)
+        abs_error_corr = X.corr()['abs_error'].drop(['error', 'abs_error']).sort_values(ascending=False)
         
-        # Plot top correlated features with error
-        plt.figure(figsize=(12, 10))
+        feature_error_corr = {
+            'error_correlation': error_corr.to_dict(),
+            'abs_error_correlation': abs_error_corr.to_dict()
+        }
         
-        # Error correlations
-        plt.subplot(2, 1, 1)
-        top_error_corr = error_correlations.drop(['error', 'abs_error']).abs().nlargest(10)
-        sns.barplot(x=top_error_corr.values, y=top_error_corr.index)
-        plt.title('Top 10 Features Correlated with Error')
-        plt.xlabel('Absolute Correlation')
-        plt.grid(True, linestyle='--', alpha=0.7)
+        # Get top correlated features
+        top_pos_corr = error_corr.head(3).index.tolist()
+        top_neg_corr = error_corr.tail(3).index.tolist()
+        top_abs_corr = abs_error_corr.head(5).index.tolist()
         
-        # Absolute error correlations
-        plt.subplot(2, 1, 2)
-        top_abs_error_corr = abs_error_correlations.drop(['error', 'abs_error']).abs().nlargest(10)
-        sns.barplot(x=top_abs_error_corr.values, y=top_abs_error_corr.index)
-        plt.title('Top 10 Features Correlated with Absolute Error')
-        plt.xlabel('Absolute Correlation')
-        plt.grid(True, linestyle='--', alpha=0.7)
+        top_error_correlated_features = {
+            'positive_correlation': top_pos_corr,
+            'negative_correlation': top_neg_corr,
+            'absolute_error_correlation': top_abs_corr
+        }
         
-        plt.tight_layout()
-        plt.savefig('visualizations/error_analysis/feature_error_correlations.png')
-        plt.close()
-        
-        # Scatter plots for top correlated features with error
-        top_feature = top_error_corr.index[0]
-        plt.figure(figsize=(10, 6))
-        plt.scatter(feature_matrix[top_feature], errors, alpha=0.5)
-        plt.axhline(y=0, color='r', linestyle='--')
-        plt.title(f'Error vs {top_feature}')
-        plt.xlabel(top_feature)
-        plt.ylabel('Error')
-        plt.grid(True, linestyle='--', alpha=0.7)
-        plt.savefig(f'visualizations/error_analysis/error_vs_{top_feature}.png')
-        plt.close()
+        # Analyze errors by feature bins for top correlated features
+        all_top_features = list(set(top_pos_corr + top_neg_corr + top_abs_corr))
+        for feature in all_top_features:
+            # Create bins for the feature
+            try:
+                X[f'{feature}_bin'] = pd.qcut(X[feature], q=5, duplicates='drop')
+                
+                # Calculate mean and median errors by bin
+                error_by_bin = X.groupby(f'{feature}_bin').agg({
+                    'error': ['mean', 'median', 'count'],
+                    'abs_error': ['mean', 'median']
+                })
+                
+                # Convert to dictionary for easier manipulation
+                error_by_feature_bins[feature] = {
+                    'bin_edges': [str(b) for b in error_by_bin.index.tolist()],
+                    'mean_error': error_by_bin['error']['mean'].tolist(),
+                    'median_error': error_by_bin['error']['median'].tolist(),
+                    'mean_abs_error': error_by_bin['abs_error']['mean'].tolist(),
+                    'median_abs_error': error_by_bin['abs_error']['median'].tolist(),
+                    'count': error_by_bin['error']['count'].tolist()
+                }
+                
+                # Plot errors by feature bin
+                plt.figure(figsize=(12, 8))
+                sns.boxplot(x=f'{feature}_bin', y='error', data=X)
+                plt.xticks(rotation=45)
+                plt.xlabel(feature)
+                plt.ylabel('Prediction Error')
+                plt.title(f'Distribution of Errors by {feature} Bins')
+                plt.tight_layout()
+                plt.savefig(f'visualizations/error_analysis/error_by_{feature}_bins.png')
+                plt.close()
+            except Exception as e:
+                print(f"Could not analyze errors for feature {feature}: {e}")
     
-    # Return error statistics and other results
     return {
         'error_stats': error_stats,
-        'errors': errors,
-        'bin_stats': bin_stats if np.min(y_true) >= 0 else None,
-        'error_correlations': error_correlations if feature_matrix is not None else None,
-        'abs_error_correlations': abs_error_correlations if feature_matrix is not None else None
+        'feature_error_corr': feature_error_corr,
+        'top_error_correlated_features': top_error_correlated_features,
+        'error_by_feature_bins': error_by_feature_bins
     }
 
-def create_regression_confusion_matrix(y_true, y_pred, n_classes=5, visualize=True):
+def create_regression_confusion_matrix(y_true, y_pred, n_classes=5, visualize=True, output_path=None):
     """
-    Create a confusion matrix for regression by binning the data
+    Create a confusion matrix for regression by binning predictions and true values
     
     Parameters:
     -----------
@@ -226,102 +145,64 @@ def create_regression_confusion_matrix(y_true, y_pred, n_classes=5, visualize=Tr
     y_pred : array-like
         Predicted target values
     n_classes : int
-        Number of bins/classes to create
+        Number of bins to create
     visualize : bool
-        Whether to create visualizations
+        Whether to create a visualization
+    output_path : str, optional
+        Path to save the visualization
         
     Returns:
     --------
     tuple
-        (confusion_matrix, bin_edges)
+        Tuple with confusion matrix and bin edges
     """
-    # Create output directory if visualization is requested
-    if visualize:
-        os.makedirs('visualizations/confusion_matrix', exist_ok=True)
-    
-    # Convert to numpy arrays
-    y_true = np.array(y_true)
-    y_pred = np.array(y_pred)
+    # Determine bin edges
+    min_val = min(y_true.min(), y_pred.min())
+    max_val = max(y_true.max(), y_pred.max())
     
     # Create bins
-    # Use the range of true values to create bin edges
-    bin_edges = np.percentile(y_true, np.linspace(0, 100, n_classes+1))
+    bin_edges = np.linspace(min_val, max_val, n_classes + 1)
     
-    # If there are duplicate bin edges (possible with discrete or skewed data), adjust
-    if len(np.unique(bin_edges)) < len(bin_edges):
-        bin_edges = np.linspace(np.min(y_true), np.max(y_true), n_classes+1)
+    # Assign each value to a bin
+    y_true_bins = np.digitize(y_true, bin_edges) - 1
+    y_pred_bins = np.digitize(y_pred, bin_edges) - 1
     
-    # Create bin labels
-    bin_labels = [f'Bin {i+1}' for i in range(n_classes)]
-    
-    # Assign true and predicted values to bins
-    y_true_binned = np.digitize(y_true, bin_edges[1:])  # returns bin indices (0 to n_classes-1)
-    y_pred_binned = np.digitize(y_pred, bin_edges[1:])
+    # Cap at the highest bin index
+    y_true_bins = np.minimum(y_true_bins, n_classes - 1)
+    y_pred_bins = np.minimum(y_pred_bins, n_classes - 1)
     
     # Create confusion matrix
-    cm = confusion_matrix(y_true_binned, y_pred_binned)
+    cm = np.zeros((n_classes, n_classes), dtype=int)
+    for i in range(len(y_true)):
+        cm[y_true_bins[i], y_pred_bins[i]] += 1
     
-    # Visualize confusion matrix
+    # Visualize the confusion matrix
     if visualize:
+        # Ensure output directory exists
+        if output_path:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        else:
+            os.makedirs('visualizations/confusion_matrix', exist_ok=True)
+            output_path = 'visualizations/confusion_matrix/regression_confusion_matrix.png'
+        
+        # Format bin edges for display
+        bin_labels = [f"{bin_edges[i]:.0f}-{bin_edges[i+1]:.0f}" for i in range(n_classes)]
+        
         plt.figure(figsize=(10, 8))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
                    xticklabels=bin_labels, yticklabels=bin_labels)
-        plt.title('Regression Confusion Matrix')
         plt.xlabel('Predicted Bin')
-        plt.ylabel('Actual Bin')
+        plt.ylabel('True Bin')
+        plt.title('Regression Confusion Matrix')
         plt.tight_layout()
-        plt.savefig('visualizations/confusion_matrix/regression_confusion_matrix.png')
+        plt.savefig(output_path)
         plt.close()
-        
-        # Create bin edge descriptions
-        bin_descriptions = []
-        for i in range(n_classes):
-            bin_descriptions.append(f"Bin {i+1}: [{bin_edges[i]:.2f}, {bin_edges[i+1]:.2f})")
-        
-        # Plot bin distribution
-        plt.figure(figsize=(12, 6))
-        
-        # True bin distribution
-        plt.subplot(1, 2, 1)
-        sns.countplot(x=y_true_binned)
-        plt.title('Distribution of True Values Across Bins')
-        plt.xlabel('Bin')
-        plt.xticks(range(n_classes), bin_labels)
-        plt.grid(True, linestyle='--', alpha=0.7)
-        
-        # Predicted bin distribution
-        plt.subplot(1, 2, 2)
-        sns.countplot(x=y_pred_binned)
-        plt.title('Distribution of Predicted Values Across Bins')
-        plt.xlabel('Bin')
-        plt.xticks(range(n_classes), bin_labels)
-        plt.grid(True, linestyle='--', alpha=0.7)
-        
-        plt.tight_layout()
-        plt.savefig('visualizations/confusion_matrix/bin_distributions.png')
-        plt.close()
-        
-        # Create classification report
-        report = classification_report(y_true_binned, y_pred_binned, 
-                                      target_names=bin_labels, 
-                                      output_dict=True)
-        
-        # Convert report to DataFrame for easier manipulation
-        report_df = pd.DataFrame(report).transpose()
-        
-        # Save the classification report
-        with open('visualizations/confusion_matrix/classification_report.txt', 'w') as f:
-            f.write("Bin Descriptions:\n")
-            for desc in bin_descriptions:
-                f.write(f"{desc}\n")
-            f.write("\nClassification Report:\n")
-            f.write(pd.DataFrame(report).transpose().to_string())
     
     return cm, bin_edges
 
-def plot_error_heatmap(y_true, y_pred, feature1, feature2, feature1_name=None, feature2_name=None):
+def plot_error_heatmap(y_true, y_pred, feature1, feature2, feature1_name, feature2_name, output_path=None):
     """
-    Create a heatmap showing prediction errors across two feature dimensions
+    Create a heatmap of prediction errors by two features
     
     Parameters:
     -----------
@@ -333,27 +214,20 @@ def plot_error_heatmap(y_true, y_pred, feature1, feature2, feature1_name=None, f
         First feature values
     feature2 : array-like
         Second feature values
-    feature1_name : str, optional
+    feature1_name : str
         Name of the first feature
-    feature2_name : str, optional
+    feature2_name : str
         Name of the second feature
+    output_path : str, optional
+        Path to save the visualization
         
     Returns:
     --------
     None
     """
-    # Create output directory
-    os.makedirs('visualizations/error_analysis', exist_ok=True)
-    
     # Calculate errors
-    errors = y_pred - y_true
+    errors = y_true - y_pred
     abs_errors = np.abs(errors)
-    
-    # Create feature names if not provided
-    if feature1_name is None:
-        feature1_name = 'Feature 1'
-    if feature2_name is None:
-        feature2_name = 'Feature 2'
     
     # Create a DataFrame with features and errors
     df = pd.DataFrame({
@@ -363,38 +237,46 @@ def plot_error_heatmap(y_true, y_pred, feature1, feature2, feature1_name=None, f
         'abs_error': abs_errors
     })
     
-    # Create bins for both features
-    feature1_bins = pd.qcut(df[feature1_name], 5, labels=False, duplicates='drop')
-    feature2_bins = pd.qcut(df[feature2_name], 5, labels=False, duplicates='drop')
-    
-    df['feature1_bin'] = feature1_bins
-    df['feature2_bin'] = feature2_bins
-    
-    # Calculate average absolute error for each bin combination
-    error_matrix = df.groupby(['feature1_bin', 'feature2_bin'])['abs_error'].mean().unstack()
-    
-    # Plot heatmap
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(error_matrix, annot=True, fmt='.2f', cmap='YlOrRd')
-    plt.title(f'Mean Absolute Error by {feature1_name} and {feature2_name}')
-    plt.xlabel(feature2_name + ' (binned)')
-    plt.ylabel(feature1_name + ' (binned)')
-    plt.tight_layout()
-    plt.savefig(f'visualizations/error_analysis/error_heatmap_{feature1_name}_{feature2_name}.png')
-    plt.close()
-    
-    # Plot bias heatmap (mean error instead of absolute error)
-    bias_matrix = df.groupby(['feature1_bin', 'feature2_bin'])['error'].mean().unstack()
-    
-    plt.figure(figsize=(10, 8))
-    # Use a diverging colormap for bias, centered at 0
-    sns.heatmap(bias_matrix, annot=True, fmt='.2f', cmap='coolwarm', center=0)
-    plt.title(f'Mean Error (Bias) by {feature1_name} and {feature2_name}')
-    plt.xlabel(feature2_name + ' (binned)')
-    plt.ylabel(feature1_name + ' (binned)')
-    plt.tight_layout()
-    plt.savefig(f'visualizations/error_analysis/bias_heatmap_{feature1_name}_{feature2_name}.png')
-    plt.close()
+    # Create bins for the features
+    try:
+        df[f'{feature1_name}_bin'] = pd.qcut(df[feature1_name], q=5, duplicates='drop')
+        df[f'{feature2_name}_bin'] = pd.qcut(df[feature2_name], q=5, duplicates='drop')
+        
+        # Group by feature bins and calculate mean absolute error
+        heatmap_data = df.groupby([f'{feature1_name}_bin', f'{feature2_name}_bin'])['abs_error'].mean().unstack()
+        
+        # Ensure output directory exists
+        if output_path:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        else:
+            os.makedirs('visualizations/error_analysis', exist_ok=True)
+            output_path = f'visualizations/error_analysis/error_heatmap_{feature1_name}_{feature2_name}.png'
+        
+        # Plot heatmap
+        plt.figure(figsize=(12, 10))
+        sns.heatmap(heatmap_data, annot=True, fmt='.1f', cmap='YlOrRd')
+        plt.xlabel(feature2_name)
+        plt.ylabel(feature1_name)
+        plt.title(f'Mean Absolute Error by {feature1_name} and {feature2_name}')
+        plt.tight_layout()
+        plt.savefig(output_path)
+        plt.close()
+    except Exception as e:
+        print(f"Could not create error heatmap: {e}")
+        
+        # Try creating a scatter plot instead
+        plt.figure(figsize=(10, 8))
+        scatter = plt.scatter(df[feature1_name], df[feature2_name], c=df['abs_error'], cmap='YlOrRd', alpha=0.7)
+        plt.colorbar(scatter, label='Absolute Error')
+        plt.xlabel(feature1_name)
+        plt.ylabel(feature2_name)
+        plt.title(f'Absolute Error by {feature1_name} and {feature2_name}')
+        
+        if output_path:
+            plt.savefig(output_path)
+        else:
+            plt.savefig(f'visualizations/error_analysis/error_scatter_{feature1_name}_{feature2_name}.png')
+        plt.close()
 
 def main():
     """Main function to demonstrate error analysis capabilities"""

@@ -1,295 +1,246 @@
 import pandas as pd
 import numpy as np
-import xgboost as xgb
-from sklearn.model_selection import TimeSeriesSplit, cross_val_score, GridSearchCV
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-from sklearn.preprocessing import StandardScaler
-from sklearn.feature_selection import SelectFromModel, SelectKBest, f_regression, RFE
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import Lasso
-from imblearn.over_sampling import SMOTE
 import matplotlib.pyplot as plt
-import seaborn as sns
+import xgboost as xgb
+from sklearn.model_selection import train_test_split, KFold, cross_val_score
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.feature_selection import SelectKBest, f_regression, mutual_info_regression
+from sklearn.ensemble import RandomForestRegressor
 import os
 import joblib
-from datetime import datetime, timedelta
+import warnings
 
-def select_features(X, y, method='xgboost', threshold=0.01, k=None, visualize=True):
+def calculate_regression_metrics(y_true, y_pred):
     """
-    Select important features using different methods
+    Calculate regression metrics
     
     Parameters:
     -----------
-    X : pandas DataFrame
-        Feature matrix
-    y : pandas Series
-        Target variable
-    method : str
-        Method for feature selection: 'xgboost', 'lasso', 'randomforest', 'kbest', or 'rfe'
-    threshold : float
-        Importance threshold for feature selection (for tree-based methods)
-    k : int, optional
-        Number of features to select (for kbest and rfe methods)
-    visualize : bool
-        Whether to create feature importance visualization
-        
-    Returns:
-    --------
-    tuple
-        (selected_features, feature_importances) where feature_importances is a DataFrame with feature names and importance scores
-    """
-    print(f"Selecting features using {method} method...")
-    feature_names = X.columns.tolist()
-    
-    if method == 'xgboost':
-        # Use XGBoost's feature importance
-        model = xgb.XGBRegressor(n_estimators=100, random_state=42)
-        model.fit(X, y)
-        importances = model.feature_importances_
-        
-        # Create feature importance DataFrame
-        feature_importances = pd.DataFrame({
-            'feature': feature_names,
-            'importance': importances
-        }).sort_values('importance', ascending=False)
-        
-        # Select features above threshold
-        selected_features = feature_importances[feature_importances['importance'] > threshold]['feature'].tolist()
-    
-    elif method == 'lasso':
-        # Use Lasso for feature selection
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
-        model = Lasso(alpha=0.01, random_state=42)
-        model.fit(X_scaled, y)
-        importances = np.abs(model.coef_)
-        
-        # Create feature importance DataFrame
-        feature_importances = pd.DataFrame({
-            'feature': feature_names,
-            'importance': importances
-        }).sort_values('importance', ascending=False)
-        
-        # Select non-zero coefficient features
-        selected_features = [feature_names[i] for i in range(len(feature_names)) if importances[i] > 0]
-    
-    elif method == 'randomforest':
-        # Use Random Forest for feature selection
-        model = RandomForestRegressor(n_estimators=100, random_state=42)
-        model.fit(X, y)
-        importances = model.feature_importances_
-        
-        # Create feature importance DataFrame
-        feature_importances = pd.DataFrame({
-            'feature': feature_names,
-            'importance': importances
-        }).sort_values('importance', ascending=False)
-        
-        # Select features above threshold
-        selected_features = feature_importances[feature_importances['importance'] > threshold]['feature'].tolist()
-    
-    elif method == 'kbest':
-        # Use SelectKBest with f_regression
-        if k is None:
-            k = min(50, X.shape[1] // 2)  # Default to half of features or 50, whichever is smaller
-            
-        selector = SelectKBest(f_regression, k=k)
-        selector.fit(X, y)
-        importances = selector.scores_
-        
-        # Create feature importance DataFrame
-        feature_importances = pd.DataFrame({
-            'feature': feature_names,
-            'importance': importances
-        }).sort_values('importance', ascending=False)
-        
-        # Get selected feature mask and feature names
-        selected_mask = selector.get_support()
-        selected_features = [feature_names[i] for i in range(len(feature_names)) if selected_mask[i]]
-    
-    elif method == 'rfe':
-        # Use Recursive Feature Elimination
-        if k is None:
-            k = min(50, X.shape[1] // 2)  # Default to half of features or 50, whichever is smaller
-            
-        base_model = RandomForestRegressor(n_estimators=50, random_state=42)
-        selector = RFE(base_model, n_features_to_select=k, step=0.1)
-        selector.fit(X, y)
-        
-        # Get selected feature mask and feature names
-        selected_mask = selector.support_
-        importances = selector.ranking_  # Lower is better
-        
-        # Inverse ranking to get higher values for more important features
-        max_rank = max(importances)
-        importances = max_rank - importances + 1
-        
-        # Create feature importance DataFrame
-        feature_importances = pd.DataFrame({
-            'feature': feature_names,
-            'importance': importances
-        }).sort_values('importance', ascending=False)
-        
-        selected_features = [feature_names[i] for i in range(len(feature_names)) if selected_mask[i]]
-    
-    else:
-        raise ValueError(f"Unknown feature selection method: {method}")
-    
-    print(f"Selected {len(selected_features)} features out of {len(feature_names)}")
-    
-    # Create visualizations if requested
-    if visualize:
-        # Create output directory if it doesn't exist
-        os.makedirs('visualizations/feature_selection', exist_ok=True)
-        
-        # Plot top features
-        plt.figure(figsize=(12, 10))
-        top_features = feature_importances.head(30)
-        sns.barplot(x='importance', y='feature', data=top_features)
-        plt.title(f'Top 30 Features Selected by {method.upper()}')
-        plt.tight_layout()
-        plt.savefig(f'visualizations/feature_selection/{method}_top_features.png')
-        plt.close()
-        
-        # Save full feature importance list to CSV
-        feature_importances.to_csv(f'feature_importance_{method}.csv', index=False)
-    
-    return selected_features, feature_importances
-
-def apply_smote(X, y, categorical_features=None, sampling_strategy='auto', k_neighbors=5):
-    """
-    Apply SMOTE to handle imbalanced regression data
-    
-    Parameters:
-    -----------
-    X : pandas DataFrame
-        Feature matrix
-    y : pandas Series
-        Target variable
-    categorical_features : list or None
-        List of categorical feature indices or names
-    sampling_strategy : float, dict, or str
-        Sampling strategy for SMOTE
-    k_neighbors : int
-        Number of nearest neighbors to use for SMOTE
-        
-    Returns:
-    --------
-    tuple
-        (X_resampled, y_resampled) as numpy arrays
-    """
-    print("Applying SMOTE for imbalanced regression data...")
-    
-    # For regression, create bins to treat as classes
-    # This is a workaround to use SMOTE with regression
-    y_binned = pd.qcut(y, q=5, labels=False, duplicates='drop')
-    
-    # Convert categorical indices to column indices if needed
-    if categorical_features is not None and isinstance(categorical_features[0], str):
-        cat_indices = [X.columns.get_loc(col) for col in categorical_features if col in X.columns]
-    else:
-        cat_indices = categorical_features
-    
-    # Apply SMOTE
-    smote = SMOTE(
-        sampling_strategy=sampling_strategy,
-        k_neighbors=k_neighbors,
-        random_state=42,
-        categorical_features=cat_indices
-    )
-    
-    X_resampled, y_binned_resampled = smote.fit_resample(X, y_binned)
-    
-    # Map back to original continuous values
-    # We'll use the mean value of each bin as the synthetic value
-    bin_means = {}
-    for bin_idx in range(len(np.unique(y_binned))):
-        bin_means[bin_idx] = y[y_binned == bin_idx].mean()
-    
-    # Create synthetic continuous target
-    y_resampled = np.array([bin_means[bin_idx] for bin_idx in y_binned_resampled])
-    
-    print(f"Original data shape: {X.shape}, Resampled data shape: {X_resampled.shape}")
-    
-    # Plot distribution before and after SMOTE
-    plt.figure(figsize=(12, 6))
-    
-    plt.subplot(1, 2, 1)
-    sns.histplot(y, kde=True)
-    plt.title('Original Target Distribution')
-    
-    plt.subplot(1, 2, 2)
-    sns.histplot(y_resampled, kde=True)
-    plt.title('SMOTE-Resampled Target Distribution')
-    
-    plt.tight_layout()
-    
-    # Create visualizations directory if it doesn't exist
-    os.makedirs('visualizations/smote', exist_ok=True)
-    plt.savefig('visualizations/smote/smote_distribution_comparison.png')
-    plt.close()
-    
-    return X_resampled, y_resampled
-
-def temporal_cross_validation(X, y, date_index, model, n_splits=5, gap=30, visualize=True):
-    """
-    Perform temporal cross-validation with time series split
-    
-    Parameters:
-    -----------
-    X : pandas DataFrame
-        Feature matrix
-    y : pandas Series
-        Target variable
-    date_index : pandas Series or array
-        Date index for time series split
-    model : estimator object
-        Scikit-learn compatible model with fit and predict methods
-    n_splits : int
-        Number of splits for time series CV
-    gap : int
-        Number of days to use as gap between train and test
-    visualize : bool
-        Whether to create visualization of CV splits
+    y_true : array-like
+        True values
+    y_pred : array-like
+        Predicted values
         
     Returns:
     --------
     dict
-        Cross-validation results with metrics
+        Dictionary of regression metrics
     """
-    print(f"Performing temporal cross-validation with {n_splits} splits and {gap} day gap...")
+    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+    mae = mean_absolute_error(y_true, y_pred)
+    r2 = r2_score(y_true, y_pred)
     
-    # Convert to datetime if not already
-    if not pd.api.types.is_datetime64_any_dtype(date_index):
-        date_index = pd.to_datetime(date_index)
+    # Calculate MAPE with better handling of zero/small values
+    # Use a threshold to avoid division by very small numbers
+    threshold = 10.0  # Define a minimal threshold for denominator
+    abs_diff = np.abs(y_true - y_pred)
     
-    # Create TimeSeriesSplit
-    tscv = TimeSeriesSplit(n_splits=n_splits)
+    # For MAPE calculation, only consider values where true value is above threshold
+    valid_indices = y_true > threshold
+    if np.any(valid_indices):
+        mape = np.mean(abs_diff[valid_indices] / y_true[valid_indices]) * 100
+    else:
+        # If no valid indices, use MAE as a proportion of mean prediction
+        mape = (mae / (np.mean(y_pred) + 1e-8)) * 100
     
-    # Prepare data
-    X_array = X.values if isinstance(X, pd.DataFrame) else X
-    y_array = y.values if isinstance(y, pd.Series) else y
-    date_array = date_index.values if isinstance(date_index, pd.Series) else date_index
-    
-    # Visualization setup
-    if visualize:
-        plt.figure(figsize=(15, 10))
-        
-    # Store results for each fold
-    cv_results = {
-        'rmse': [],
-        'mae': [],
-        'r2': [],
-        'train_size': [],
-        'test_size': [],
-        'train_start': [],
-        'train_end': [],
-        'test_start': [],
-        'test_end': []
+    return {
+        'RMSE': rmse,
+        'MAE': mae,
+        'R2': r2,
+        'MAPE': mape
     }
+
+def select_features(X, y, method='xgboost', threshold=0.01, k=10, visualize=True):
+    """
+    Select top features based on different methods
     
-    # Perform cross-validation
-    for i, (train_idx, test_idx) in enumerate(tscv.split(X_array)):
+    Parameters:
+    -----------
+    X : pandas DataFrame
+        Feature matrix
+    y : array-like
+        Target values
+    method : str, optional
+        Method to use for feature selection
+        ('xgboost', 'mutual_info', 'f_regression', 'random_forest')
+    threshold : float, optional
+        Importance threshold for XGBoost and Random Forest methods
+    k : int, optional
+        Number of top features to select for mutual_info and f_regression
+    visualize : bool, optional
+        Whether to create visualization
+        
+    Returns:
+    --------
+    list
+        List of selected feature names
+    """
+    # Get feature names
+    feature_names = X.columns.tolist()
+    
+    # Replace infinity with NaN
+    X = X.replace([np.inf, -np.inf], np.nan)
+    
+    # Handle missing values
+    X = X.fillna(X.median())
+    
+    # For test safety, drop non-numeric columns
+    numeric_cols = X.select_dtypes(include=['number']).columns
+    if len(numeric_cols) < len(X.columns):
+        print(f"Warning: Dropping {len(X.columns) - len(numeric_cols)} non-numeric columns for feature selection")
+        X = X[numeric_cols]
+        feature_names = numeric_cols.tolist()
+    
+    # Initialize feature importances
+    feature_importances = pd.DataFrame({'feature': feature_names})
+    
+    if method == 'xgboost':
+        # Use XGBoost feature importance
+        model = xgb.XGBRegressor()
+        model.fit(X, y)
+        importance = model.feature_importances_
+        
+        # Create feature importance DataFrame
+        feature_importances['importance'] = importance
+        feature_importances = feature_importances.sort_values('importance', ascending=False)
+        
+        # Select features above threshold
+        selected_features = feature_importances[feature_importances['importance'] > threshold]['feature'].tolist()
+        
+    elif method == 'mutual_info':
+        # Use mutual information
+        selector = SelectKBest(mutual_info_regression, k=k)
+        selector.fit(X, y)
+        
+        # Get scores
+        feature_importances['importance'] = selector.scores_
+        feature_importances = feature_importances.sort_values('importance', ascending=False)
+        
+        # Get selected features
+        mask = selector.get_support()
+        selected_features = [feature_names[i] for i in range(len(feature_names)) if mask[i]]
+        
+    elif method == 'f_regression':
+        # Use f_regression
+        selector = SelectKBest(f_regression, k=k)
+        selector.fit(X, y)
+        
+        # Get scores
+        feature_importances['importance'] = selector.scores_
+        feature_importances = feature_importances.sort_values('importance', ascending=False)
+        
+        # Get selected features
+        mask = selector.get_support()
+        selected_features = [feature_names[i] for i in range(len(feature_names)) if mask[i]]
+        
+    elif method == 'random_forest':
+        # Use Random Forest feature importance
+        model = RandomForestRegressor(n_estimators=100, random_state=42)
+        model.fit(X, y)
+        importance = model.feature_importances_
+        
+        # Create feature importance DataFrame
+        feature_importances['importance'] = importance
+        feature_importances = feature_importances.sort_values('importance', ascending=False)
+        
+        # Select features above threshold
+        selected_features = feature_importances[feature_importances['importance'] > threshold]['feature'].tolist()
+        
+    else:
+        raise ValueError(f"Unsupported feature selection method: {method}")
+    
+    # Ensure at least 1 feature is selected
+    if len(selected_features) == 0:
+        print("Warning: No features were selected. Using top feature instead.")
+        selected_features = [feature_importances.iloc[0]['feature']]
+    
+    # Create visualization
+    if visualize:
+        # Create directory if it doesn't exist
+        os.makedirs('visualizations/feature_selection', exist_ok=True)
+        
+        plt.figure(figsize=(10, 8))
+        
+        # Get top 20 features (or all if less than 20)
+        top_n = min(20, len(feature_importances))
+        top_features = feature_importances.head(top_n)
+        
+        # Plot feature importance
+        plt.barh(top_features['feature'], top_features['importance'])
+        plt.xlabel('Importance')
+        plt.ylabel('Feature')
+        plt.title(f'Feature Importance ({method})')
+        plt.tight_layout()
+        
+        # Save plot
+        plt.savefig(f'visualizations/feature_selection/feature_importance_{method}.png')
+        plt.close()
+    
+    print(f"Selected {len(selected_features)} features using {method}")
+    
+    return selected_features
+
+def temporal_cross_validation(X, y, date_index, model, n_splits=5, gap=30, window_type='expanding'):
+    """
+    Perform temporal cross-validation
+    
+    Parameters:
+    -----------
+    X : pandas DataFrame
+        Feature matrix
+    y : array-like
+        Target values
+    date_index : array-like
+        Date index for each sample (datetime or date objects)
+    model : estimator
+        Model to evaluate
+    n_splits : int, optional
+        Number of splits for temporal CV
+    gap : int, optional
+        Gap in days between train and test sets
+    window_type : str, optional
+        Type of window ('expanding' or 'rolling')
+        
+    Returns:
+    --------
+    tuple
+        (cv_scores, cv_predictions)
+    """
+    # Ensure date_index is a numpy array
+    date_array = np.array(date_index)
+    
+    # Sort unique dates
+    unique_dates = np.sort(np.unique(date_array))
+    
+    # Calculate splits
+    date_points = np.linspace(0, len(unique_dates) - 1, n_splits + 1).astype(int)
+    split_dates = unique_dates[date_points]
+    
+    # Initialize results
+    cv_predictions = []
+    cv_scores = []
+    
+    # Loop through splits
+    for i in range(len(split_dates) - 1):
+        # For expanding window, start from the beginning
+        # For rolling window, start from the previous split
+        if window_type == 'expanding':
+            train_start_date = unique_dates[0]
+        else:  # rolling window
+            if i == 0:
+                train_start_date = unique_dates[0]
+            else:
+                train_start_date = split_dates[i-1]
+        
+        # Define train and test dates
+        train_end_date = split_dates[i]
+        test_start_date = split_dates[i]
+        test_end_date = split_dates[i+1]
+        
+        # Define train and test indices
+        train_idx = np.where((date_array >= train_start_date) & (date_array <= train_end_date))[0]
+        test_idx = np.where((date_array > test_start_date) & (date_array <= test_end_date))[0]
+        
         # Add gap between train and test
         if gap > 0:
             # Find the latest date in train
@@ -298,251 +249,307 @@ def temporal_cross_validation(X, y, date_index, model, n_splits=5, gap=30, visua
             gap_date = max_train_date + np.timedelta64(gap, 'D')
             # Adjust test indices to start after gap
             test_idx = np.array([idx for idx in test_idx if date_array[idx] >= gap_date])
-            
-            # If there are no test points left after the gap, skip this fold
-            if len(test_idx) == 0:
-                continue
         
-        # Split data
-        X_train, X_test = X_array[train_idx], X_array[test_idx]
-        y_train, y_test = y_array[train_idx], y_array[test_idx]
+        # Check if we have enough data
+        if len(train_idx) == 0 or len(test_idx) == 0:
+            continue
         
-        # Store fold dates
-        cv_results['train_start'].append(date_array[train_idx].min())
-        cv_results['train_end'].append(date_array[train_idx].max())
-        cv_results['test_start'].append(date_array[test_idx].min())
-        cv_results['test_end'].append(date_array[test_idx].max())
-        cv_results['train_size'].append(len(train_idx))
-        cv_results['test_size'].append(len(test_idx))
+        # Get train and test sets
+        X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
         
-        # Fit model and predict
+        # Train model
         model.fit(X_train, y_train)
+        
+        # Make predictions
         y_pred = model.predict(X_test)
         
         # Calculate metrics
-        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-        mae = mean_absolute_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
+        metrics = calculate_regression_metrics(y_test, y_pred)
         
-        # Store metrics
-        cv_results['rmse'].append(rmse)
-        cv_results['mae'].append(mae)
-        cv_results['r2'].append(r2)
-        
-        # Visualize split
-        if visualize:
-            plt.subplot(n_splits, 1, i + 1)
-            
-            # Plot train and test indices
-            plt.scatter(date_array[train_idx], [i + 0.1] * len(train_idx), 
-                     c='blue', marker='o', s=5, label='Train' if i == 0 else "")
-            plt.scatter(date_array[test_idx], [i + 0.2] * len(test_idx), 
-                     c='red', marker='o', s=5, label='Test' if i == 0 else "")
-            
-            # Add metrics text
-            plt.text(date_array.min(), i + 0.3, 
-                  f"Fold {i+1}: RMSE={rmse:.2f}, MAE={mae:.2f}, R²={r2:.2f}", 
-                  fontsize=10)
-            
-            if i == 0:
-                plt.legend(loc='upper right')
-            
-            plt.title(f"Fold {i+1}")
-            if i == n_splits - 1:
-                plt.xlabel('Date')
+        # Store results
+        cv_scores.append(metrics)
+        cv_predictions.append({
+            'train_start': train_start_date,
+            'train_end': train_end_date,
+            'test_start': test_start_date,
+            'test_end': test_end_date,
+            'y_true': y_test,
+            'y_pred': y_pred,
+            'train_size': len(train_idx),
+            'test_size': len(test_idx)
+        })
     
-    # Save visualization
-    if visualize:
-        plt.suptitle("Temporal Cross-Validation Splits")
-        plt.tight_layout()
-        
-        # Create directory if it doesn't exist
-        os.makedirs('visualizations/cross_validation', exist_ok=True)
-        plt.savefig('visualizations/cross_validation/temporal_cv_splits.png')
-        plt.close()
-        
-        # Create a summary plot of metrics across folds
-        plt.figure(figsize=(15, 6))
-        
-        plt.subplot(1, 3, 1)
-        plt.plot(range(1, len(cv_results['rmse'])+1), cv_results['rmse'], 'o-')
-        plt.title('RMSE by Fold')
-        plt.xlabel('Fold')
-        plt.ylabel('RMSE')
-        
-        plt.subplot(1, 3, 2)
-        plt.plot(range(1, len(cv_results['mae'])+1), cv_results['mae'], 'o-')
-        plt.title('MAE by Fold')
-        plt.xlabel('Fold')
-        plt.ylabel('MAE')
-        
-        plt.subplot(1, 3, 3)
-        plt.plot(range(1, len(cv_results['r2'])+1), cv_results['r2'], 'o-')
-        plt.title('R² by Fold')
-        plt.xlabel('Fold')
-        plt.ylabel('R²')
-        
-        plt.tight_layout()
-        plt.savefig('visualizations/cross_validation/temporal_cv_metrics.png')
-        plt.close()
-    
-    # Calculate average metrics
-    cv_results['avg_rmse'] = np.mean(cv_results['rmse'])
-    cv_results['avg_mae'] = np.mean(cv_results['mae'])
-    cv_results['avg_r2'] = np.mean(cv_results['r2'])
-    
-    print(f"Average CV metrics - RMSE: {cv_results['avg_rmse']:.4f}, MAE: {cv_results['avg_mae']:.4f}, R²: {cv_results['avg_r2']:.4f}")
-    
-    return cv_results
+    return cv_scores, cv_predictions
 
-def run_advanced_modeling_pipeline(claims_df, members_df, date_col='ServiceDate', 
-                                 target_col='future_6m_claims', feature_selection_method='xgboost',
-                                 use_smote=True, temporal_cv=True):
+def create_regression_confusion_matrix(y_true, y_pred, thresholds=None, visualize=True, filename='regression_confusion_matrix.png'):
     """
-    Run a complete advanced modeling pipeline with feature selection, SMOTE, and temporal CV
+    Create a confusion matrix for regression predictions
     
     Parameters:
     -----------
-    claims_df : pandas DataFrame
-        The claims dataframe
-    members_df : pandas DataFrame
-        The members dataframe
-    date_col : str
-        Column name containing dates for temporal CV
-    target_col : str
-        Column name containing the target variable
-    feature_selection_method : str
-        Method for feature selection
-    use_smote : bool
-        Whether to apply SMOTE for imbalanced regression
-    temporal_cv : bool
+    y_true : array-like
+        True values
+    y_pred : array-like
+        Predicted values
+    thresholds : list, optional
+        List of thresholds for binning the values
+        If None, quartiles are used
+    visualize : bool, optional
+        Whether to create visualization
+    filename : str, optional
+        Filename for saving the visualization
+        
+    Returns:
+    --------
+    pandas DataFrame
+        Confusion matrix as a DataFrame
+    """
+    # Create bins based on quartiles of true values if not provided
+    if thresholds is None:
+        thresholds = [
+            np.percentile(y_true, 25),
+            np.percentile(y_true, 50),
+            np.percentile(y_true, 75)
+        ]
+    
+    # Ensure thresholds are sorted
+    thresholds = sorted(thresholds)
+    
+    # Create bin edges
+    bin_edges = [-np.inf] + thresholds + [np.inf]
+    
+    # Create bin labels
+    bin_labels = [f'Q{i+1}' for i in range(len(bin_edges) - 1)]
+    
+    # Bin the values
+    y_true_binned = pd.cut(y_true, bins=bin_edges, labels=bin_labels)
+    y_pred_binned = pd.cut(y_pred, bins=bin_edges, labels=bin_labels)
+    
+    # Create confusion matrix
+    confusion = pd.crosstab(
+        y_true_binned, y_pred_binned, 
+        rownames=['Actual'], colnames=['Predicted'], 
+        normalize='index'
+    )
+    
+    # Create visualization
+    if visualize:
+        # Create directory if it doesn't exist
+        os.makedirs('visualizations', exist_ok=True)
+        
+        plt.figure(figsize=(10, 8))
+        sns = __import__('seaborn')
+        
+        # Plot confusion matrix
+        sns.heatmap(confusion, annot=True, cmap='Blues', fmt='.2f', cbar=True)
+        plt.title('Regression Confusion Matrix (Normalized by Row)')
+        plt.tight_layout()
+        
+        # Save plot
+        plt.savefig(f'visualizations/{filename}')
+        plt.close()
+    
+    return confusion
+
+def run_advanced_modeling_pipeline(X, y, date_index=None, feature_selection_method='xgboost', 
+                                  model_type='xgboost', temporal_cv=True):
+    """
+    Run a complete advanced modeling pipeline with feature selection and temporal CV
+    
+    Parameters:
+    -----------
+    X : pandas DataFrame
+        Feature matrix
+    y : array-like
+        Target values
+    date_index : array-like, optional
+        Date index for each sample (required if temporal_cv=True)
+    feature_selection_method : str, optional
+        Method to use for feature selection
+    model_type : str, optional
+        Type of model to train ('xgboost', 'random_forest')
+    temporal_cv : bool, optional
         Whether to use temporal cross-validation
         
     Returns:
     --------
     dict
-        Results of the modeling pipeline
+        Dictionary with results
     """
     print("Starting advanced modeling pipeline...")
     
-    # Assuming we have a combined features dataframe from previous steps
-    # For this example, we'll create a simple combined dataframe
-    from data_preparation import prepare_data_for_modeling
-    from feature_engineering import prepare_features_for_modeling
-    from enhanced_feature_engineering import enhanced_feature_engineering
+    # Convert y to pandas Series if it's not already
+    if not isinstance(y, pd.Series):
+        y = pd.Series(y)
     
-    print("Preparing data...")
-    claims, members = prepare_data_for_modeling()
+    # Check if date_index is provided for temporal CV
+    if temporal_cv and date_index is None:
+        print("Warning: date_index is required for temporal CV. Falling back to standard train/test split.")
+        temporal_cv = False
     
-    print("Engineering features...")
-    cutoff_date = claims[date_col].max() - timedelta(days=180)
-    features_df = prepare_features_for_modeling(claims, members, cutoff_date)
-    
-    print("Applying advanced feature engineering...")
-    enhanced_features = enhanced_feature_engineering(claims, members)
-    
-    # Combine with the regular features
-    combined_features = pd.merge(features_df, enhanced_features, on='Member_ID', how='left')
-    
-    # Prepare data for modeling
-    X = combined_features.drop([target_col, 'Member_ID', 'PolicyID'], axis=1, errors='ignore')
-    y = combined_features[target_col]
-    
-    # Drop date columns and any other non-numeric columns
-    X = X.select_dtypes(include=['int', 'float'])
-    
-    # Handle NaN values
-    X = X.fillna(0)
-    
-    # Feature selection
-    selected_features, feature_importances = select_features(
-        X, y, 
-        method=feature_selection_method,
-        threshold=0.01,
-        visualize=True
-    )
-    
-    # Use selected features
+    # Step 1: Feature selection
+    print("\nPerforming feature selection...")
+    selected_features = select_features(X, y, method=feature_selection_method)
     X_selected = X[selected_features]
     
-    # Apply SMOTE if requested
-    if use_smote:
-        # Identify categorical columns for SMOTE
-        categorical_cols = []  # No categorical columns after one-hot encoding
-        X_resampled, y_resampled = apply_smote(
-            X_selected, y,
-            categorical_features=categorical_cols
+    # Step 2: Split data for evaluation
+    if not temporal_cv:
+        # Use standard train/test split
+        X_train, X_test, y_train, y_test = train_test_split(X_selected, y, test_size=0.2, random_state=42)
+    
+    # Step 3: Create and train model
+    print("\nTraining model...")
+    
+    if model_type == 'xgboost':
+        model = xgb.XGBRegressor(
+            n_estimators=100,
+            learning_rate=0.1,
+            max_depth=6,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            random_state=42
+        )
+    elif model_type == 'random_forest':
+        model = RandomForestRegressor(
+            n_estimators=100,
+            max_depth=10,
+            min_samples_split=5,
+            random_state=42
         )
     else:
-        X_resampled, y_resampled = X_selected.values, y.values
+        raise ValueError(f"Unsupported model type: {model_type}")
     
-    # Choose a model
-    model = xgb.XGBRegressor(
-        n_estimators=200,
-        learning_rate=0.05,
-        max_depth=5,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        random_state=42
-    )
-    
-    # Temporal cross-validation if requested
+    # Step 4: Evaluate model
     if temporal_cv:
-        # Extract dates for each member (using the latest claim date for each member)
-        member_dates = claims.groupby('Member_ID')[date_col].max().reset_index()
-        date_index = pd.Series(index=member_dates['Member_ID'], data=member_dates[date_col])
-        
-        # Match dates with data order
-        date_values = np.array([
-            date_index.get(member_id, pd.Timestamp('2000-01-01')) 
-            for member_id in combined_features['Member_ID']
-        ])
-        
-        # Run temporal CV
-        cv_results = temporal_cross_validation(
-            X_resampled, y_resampled,
-            date_values, model,
-            n_splits=5, gap=30,
-            visualize=True
+        print("\nPerforming temporal cross-validation...")
+        cv_scores, cv_predictions = temporal_cross_validation(
+            X_selected, y, date_index, model
         )
+        
+        # Calculate average metrics
+        avg_metrics = {}
+        for metric in cv_scores[0].keys():
+            avg_metrics[metric] = np.mean([score[metric] for score in cv_scores])
+        
+        print("\nAverage CV Metrics:")
+        for metric, value in avg_metrics.items():
+            print(f"{metric}: {value:.4f}")
+            
+        # Train final model on all data
+        model.fit(X_selected, y)
+        
+        # Make predictions on all data for visualizations
+        y_pred_all = model.predict(X_selected)
+        
     else:
-        # Train on full dataset if not using CV
-        model.fit(X_resampled, y_resampled)
-        cv_results = None
+        # Train model on training set
+        model.fit(X_train, y_train)
+        
+        # Evaluate on test set
+        y_pred = model.predict(X_test)
+        metrics = calculate_regression_metrics(y_test, y_pred)
+        
+        print("\nTest Metrics:")
+        for metric, value in metrics.items():
+            print(f"{metric}: {value:.4f}")
+        
+        # Make predictions on all data for visualizations
+        y_pred_all = model.predict(X_selected)
     
-    # Train final model on all data
-    final_model = xgb.XGBRegressor(
-        n_estimators=200,
-        learning_rate=0.05,
-        max_depth=5,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        random_state=42
+    # Step 5: Create visualizations
+    print("\nCreating visualizations...")
+    
+    # Create directory if it doesn't exist
+    os.makedirs('visualizations/model_results', exist_ok=True)
+    
+    # Create predicted vs actual scatter plot
+    plt.figure(figsize=(10, 8))
+    plt.scatter(y, y_pred_all, alpha=0.5)
+    plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--')
+    plt.xlabel('Actual')
+    plt.ylabel('Predicted')
+    plt.title(f'{model_type.upper()}: Predicted vs Actual')
+    plt.tight_layout()
+    plt.savefig(f'visualizations/model_results/{model_type}_predicted_vs_actual.png')
+    plt.close()
+    
+    # Create QQ plot
+    plt.figure(figsize=(10, 8))
+    plt.scatter(np.sort(y), np.sort(y_pred_all), alpha=0.5)
+    plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--')
+    plt.xlabel('Actual Quantiles')
+    plt.ylabel('Predicted Quantiles')
+    plt.title(f'{model_type.upper()}: Q-Q Plot')
+    plt.tight_layout()
+    plt.savefig(f'visualizations/model_results/{model_type}_qq_plot.png')
+    plt.close()
+    
+    # Create error histogram
+    plt.figure(figsize=(10, 8))
+    plt.hist(y_pred_all - y, bins=30, alpha=0.7)
+    plt.axvline(x=0, color='r', linestyle='--')
+    plt.xlabel('Prediction Error')
+    plt.ylabel('Frequency')
+    plt.title(f'{model_type.upper()}: Prediction Error Distribution')
+    plt.tight_layout()
+    plt.savefig(f'visualizations/model_results/{model_type}_error_distribution.png')
+    plt.close()
+    
+    # Create regression confusion matrix
+    confusion = create_regression_confusion_matrix(
+        y, y_pred_all, 
+        visualize=True, 
+        filename=f'model_results/{model_type}_confusion_matrix.png'
     )
-    final_model.fit(X_resampled, y_resampled)
     
-    # Save final model and feature list
+    # Step 6: Save model
+    print("\nSaving model...")
+    os.makedirs('models', exist_ok=True)
+    model_path = f'models/{model_type}_advanced_model.pkl'
+    
+    # Save model with metadata
     model_info = {
-        'model': final_model,
+        'model': model,
+        'feature_selection_method': feature_selection_method,
         'selected_features': selected_features,
-        'feature_importances': feature_importances,
-        'cv_results': cv_results
+        'model_type': model_type,
+        'temporal_cv': temporal_cv,
+        'date_saved': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
     }
     
-    # Save model
-    joblib.dump(model_info, 'advanced_model.pkl')
+    joblib.dump(model_info, model_path)
+    print(f"Model saved to {model_path}")
     
-    print("Advanced modeling pipeline completed and model saved.")
-    
-    return model_info
+    # Return results
+    if temporal_cv:
+        return {
+            'model': model,
+            'selected_features': selected_features,
+            'cv_scores': cv_scores,
+            'cv_predictions': cv_predictions,
+            'avg_metrics': avg_metrics,
+            'confusion_matrix': confusion,
+            'model_path': model_path
+        }
+    else:
+        return {
+            'model': model,
+            'selected_features': selected_features,
+            'metrics': metrics,
+            'y_pred': y_pred,
+            'y_test': y_test,
+            'confusion_matrix': confusion,
+            'model_path': model_path
+        }
 
 if __name__ == "__main__":
     # Example usage
     print("Running advanced modeling pipeline...")
     run_advanced_modeling_pipeline(
-        claims_df=None,  # Will be loaded in the function
-        members_df=None,  # Will be loaded in the function
+        X=None,  # Will be loaded in the function
+        y=None,  # Will be loaded in the function
         feature_selection_method='xgboost',
-        use_smote=True,
+        model_type='xgboost',
         temporal_cv=True
     )

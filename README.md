@@ -138,6 +138,32 @@ These techniques significantly improve model performance, especially for predict
 
 ### Model Performance and Insights
 
+
+## Unbiased Model Performance
+
+The unbiased model uses only member attributes and avoids using claim-based features for prediction:
+
+- **RMSE**: 4143.04 USD
+- **MAE**: 2406.69 USD
+- **R²**: -0.26
+- **MAPE**: 41370074463041.58%
+
+### Top 5 Important Features
+
+| feature              |   importance |
+|:---------------------|-------------:|
+| lifestyle_risk_score |    0.136139  |
+| country_UK           |    0.0754112 |
+| country_Canada       |    0.0666563 |
+| total_conditions     |    0.0662534 |
+| gender_False         |    0.0541064 |
+
+### Key Findings
+
+- The model now predicts future claims using only member characteristics, avoiding potential bias from using historical claim features
+- Questionnaire responses remain strong predictors of future claims
+- Demographic and lifestyle factors show high predictive power
+- This approach better isolates true risk factors rather than merely using past claims to predict future claims
 #### Predictions vs Actual
 ![Predictions vs Actual](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/predictions_vs_actual.png)
 

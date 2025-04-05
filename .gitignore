@@ -43,5 +43,5 @@ coverage.xml
 *.h5
 *.log
 models/
-visualizations/
+# visualizations/ # Allowing visualizations to be pushed to GitHub
 results/ 

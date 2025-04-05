@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.0] - 2025-04-05
+
+### Added
+- New unbiased modeling approach that avoids using claim features for prediction
+- Member-based feature engineering focused on demographics, health indicators, and questionnaires
+- Improved model integrity by preventing data leakage between features and target
+
+### Changed
+- Completely revised feature engineering process to remove bias
+- Updated pipeline to use only member attributes for prediction
+- Modified visualization and reporting to reflect new model approach
+
+### Fixed
+- Addressed the circular reasoning issue where claims were used to predict future claims
+- Eliminated correlation bias between independent and dependent variables
+- Improved model generalizability by focusing on true predictive factors
+
 All notable changes to this project will be documented in this file.
 
 ## [1.3.1] - 2023-04-06
