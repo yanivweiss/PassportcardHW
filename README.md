@@ -212,7 +212,7 @@ These techniques significantly improve model performance, especially for predict
 ### Advanced Analysis
 
 #### Temporal Cross-Validation
-![Temporal CV](visualizations/cross_validation/temporal_cv_splits.png)
+![Temporal CV](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/visualizations/cross_validation/temporal_cv_splits.png)
 
 **Analysis:** Our temporal cross-validation approach shows:
 - Proper time-based separation between training and test data
@@ -221,7 +221,7 @@ These techniques significantly improve model performance, especially for predict
 - More realistic performance estimation for time-series data
 
 #### Error Analysis Heatmap
-![Error Heatmap](visualizations/error_analysis/error_heatmap_Feature1_Feature2.png)
+![Error Heatmap](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/visualizations/error_analysis/error_heatmap_Feature1_Feature2.png)
 
 **Analysis:** This heatmap reveals:
 - Areas of the feature space where prediction errors are highest
@@ -230,7 +230,7 @@ These techniques significantly improve model performance, especially for predict
 - Opportunities for model improvement in targeted regions
 
 #### Regression Confusion Matrix
-![Regression Confusion Matrix](visualizations/confusion_matrix/regression_confusion_matrix.png)
+![Regression Confusion Matrix](https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/visualizations/confusion_matrix/regression_confusion_matrix.png)
 
 **Analysis:** The regression confusion matrix shows:
 - How well the model predicts claim amount categories
