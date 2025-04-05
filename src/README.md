@@ -69,4 +69,26 @@ from models.model_explainability import explain_model_with_shap
 
 # Get SHAP explanations for a model
 shap_data = explain_model_with_shap(model, X_test, feature_names=X_test.columns)
-``` 
+```
+
+## Code Cleanup Plan
+
+To improve code maintainability and reduce redundancy, the following cleanup will be performed:
+
+### 1. Removal of Unused Files
+- Empty notebook files in the `notebooks/` directory
+- Redundant run scripts that duplicate functionality
+
+### 2. Consolidation of Duplicate Code
+- Merging overlapping functionality from multiple run scripts into a single unified pipeline
+- Centralizing common utility functions into shared modules
+- Standardizing the model training and prediction workflows
+
+### 3. Standardized Pipeline Structure
+The consolidated codebase will follow a more consistent structure:
+- `data_preparation.py`: All data loading and preprocessing functions
+- `feature_engineering.py`: Feature creation and transformation
+- `modeling.py`: Model training, evaluation and prediction 
+- `run_pipeline.py`: Main entry point for the complete analysis pipeline
+
+This reorganization will make the codebase more maintainable, reduce redundancy, and improve overall code quality. 

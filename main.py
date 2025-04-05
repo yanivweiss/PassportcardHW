@@ -1,75 +1,91 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from datetime import datetime, timedelta
+#!/usr/bin/env python
+"""
+PassportCard Claims Analysis - Main Entry Point
 
-from data_preparation import prepare_data_for_modeling
-from feature_engineering import prepare_features_for_modeling
-from model_development import train_and_evaluate_model
+This script serves as the main entry point for the PassportCard insurance claims analysis pipeline.
+It provides a simplified interface to run the full prediction pipeline with various options.
 
-def plot_feature_importance(feature_importance, title='Top 20 Most Important Features'):
-    """Plot feature importance"""
-    plt.figure(figsize=(12, 6))
-    feature_importance.head(20).plot(x='feature', y='importance', kind='bar')
-    plt.title(title)
-    plt.xticks(rotation=45, ha='right')
-    plt.tight_layout()
-    plt.savefig('feature_importance.png')
-    plt.close()
+Usage:
+    python main.py [options]
+    
+Options:
+    --force-train       Force training a new model even if one exists
+    --basic-features    Use only basic features without advanced ones
+    --no-report         Skip generating business report
+    --test              Run with test data (smaller dataset)
+"""
 
-def plot_predictions_vs_actual(y_test, y_pred, title='Predicted vs Actual Claims'):
-    """Plot predicted vs actual values"""
-    plt.figure(figsize=(10, 10))
-    plt.scatter(y_test, y_pred, alpha=0.5)
-    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)
-    plt.xlabel('Actual Claims')
-    plt.ylabel('Predicted Claims')
-    plt.title(title)
-    plt.tight_layout()
-    plt.savefig('predictions_vs_actual.png')
-    plt.close()
+import os
+import sys
+import argparse
+from datetime import datetime
 
 def main():
-    """Main analysis pipeline"""
-    print("1. Preparing data...")
-    claims_df, members_df = prepare_data_for_modeling()
+    """Main entry point for the PassportCard analysis pipeline"""
+    parser = argparse.ArgumentParser(description="Run the PassportCard Claims Analysis Pipeline")
+    parser.add_argument('--force-train', action='store_true', help='Force training a new model even if one exists')
+    parser.add_argument('--basic-features', action='store_true', help='Use only basic features without advanced ones')
+    parser.add_argument('--no-report', action='store_true', help='Skip generating business report')
+    parser.add_argument('--test', action='store_true', help='Run with test data (smaller dataset)')
+    args = parser.parse_args()
     
-    print("\n2. Engineering features...")
-    # Use a cutoff date 6 months before the last date to create validation set
-    cutoff_date = claims_df['ServiceDate'].max() - timedelta(days=180)
-    features_df = prepare_features_for_modeling(claims_df, members_df, cutoff_date)
+    start_time = datetime.now()
     
-    print("\n3. Training and evaluating model...")
-    model, metrics, feature_importance, shap_values, scaler = train_and_evaluate_model(features_df)
+    print(f"Starting PassportCard Claims Analysis Pipeline at {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     
-    print("\nModel Performance Metrics:")
-    for metric, value in metrics.items():
-        print(f"{metric}: {value:.4f}")
+    # Create necessary directories
+    os.makedirs('models', exist_ok=True)
+    os.makedirs('reports', exist_ok=True)
+    os.makedirs('visualizations', exist_ok=True)
+    os.makedirs('outputs/figures/predictions', exist_ok=True)
+    os.makedirs('outputs/tables', exist_ok=True)
     
-    print("\n4. Creating visualizations...")
-    plot_feature_importance(feature_importance)
+    if args.test:
+        print("Running in TEST MODE with small sample data")
+        # Import and run test data generation
+        try:
+            from src.create_test_data import create_test_claims_data, create_test_members_data
+            create_test_claims_data(n_claims=500, n_members=50)
+            create_test_members_data(n_members=50)
+        except Exception as e:
+            print(f"Error creating test data: {e}")
+            return 1
     
-    # Get test predictions for visualization
-    exclude_cols = ['Member_ID', 'PolicyID', 'future_6m_claims', 'PolicyStartDate', 'PolicyEndDate', 'DateOfBirth']
-    feature_cols = [col for col in features_df.columns if col not in exclude_cols]
+    # Import and run the main prediction pipeline
+    try:
+        from src.run_prediction_pipeline import run_pipeline
+        
+        result = run_pipeline(
+            force_train=args.force_train,
+            advanced_features=not args.basic_features,
+            use_business_report=not args.no_report
+        )
+        
+        # Calculate and print elapsed time
+        end_time = datetime.now()
+        elapsed_time = (end_time - start_time).total_seconds() / 60.0
+        
+        print("\nAnalysis Pipeline Summary:")
+        print(f"- Started: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"- Completed: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"- Total runtime: {elapsed_time:.2f} minutes")
+        
+        if result and 'metrics' in result:
+            print("\nModel Performance:")
+            for metric, value in result['metrics'].items():
+                print(f"  {metric.upper()}: {value:.4f}")
+        
+        print("\nOutputs:")
+        print("- Model: models/best_xgboost_model.pkl")
+        print("- Business Report: reports/advanced_business_report.md")
+        print("- Visualizations: visualizations/ and outputs/figures/")
+        print("- Prediction Results: outputs/tables/prediction_results.csv")
+        
+        return 0
     
-    X_test = features_df.sample(frac=0.2, random_state=42)
-    y_test = X_test['future_6m_claims']
-    X_test_scaled = scaler.transform(X_test[feature_cols])
-    y_pred = model.predict(X_test_scaled)
-    plot_predictions_vs_actual(y_test, y_pred)
-    
-    print("\n5. Saving results...")
-    # Save feature importance
-    feature_importance.to_csv('feature_importance.csv', index=False)
-    
-    # Save model metrics
-    with open('model_metrics.txt', 'w') as f:
-        for metric, value in metrics.items():
-            f.write(f"{metric}: {value:.4f}\n")
-    
-    print("\nAnalysis complete! Results have been saved to files.")
+    except Exception as e:
+        print(f"Error running prediction pipeline: {e}")
+        return 1
 
 if __name__ == "__main__":
-    main() 
+    sys.exit(main()) 

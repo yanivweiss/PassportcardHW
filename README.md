@@ -1,157 +1,201 @@
 # PassportCard Insurance Claims Prediction
 
+This project develops a machine learning system to predict future insurance claims for PassportCard policyholders.
+
 ## Project Overview
-This project develops predictive models for insurance claims at PassportCard. The analysis focuses on predicting the total claim amount per customer for the next six months using member profiles and optionally claims history. The solution prioritizes unbiased prediction approaches that avoid circular dependencies between features and target variables.
 
-## Key Innovations
+The system uses historical claims data and member information to predict the total claim amount a customer is expected to make in the next six months. This prediction helps in risk assessment, pricing, and resource allocation.
 
-### Unbiased Modeling Approach
-- **Member-Only Feature Engineering**: Uses only member attributes for predictions, avoiding historical claims data in features
-- **Reduced Data Leakage**: Prevents circular reasoning where historical claims predict future claims
-- **Isolating True Risk Factors**: Focuses on intrinsic member characteristics that influence claims
+## Table of Contents
 
-### Advanced Data Science Techniques
-- **Comprehensive Feature Engineering**: Extracts meaningful features from member demographics, questionnaire responses, and health indicators
-- **XGBoost Modeling**: Implements gradient boosting with hyperparameter optimization
-- **Thorough Validation**: Implements proper temporal validation to prevent leakage
-- **Error Analysis**: Detailed examination of prediction errors to understand model limitations
-
-## Model Performance
-
-### Unbiased Member-Based Model
-
-The unbiased model uses only member attributes and avoids using claim-based features for prediction:
-
-- **RMSE**: 4143.04 USD
-- **MAE**: 2406.69 USD
-- **R²**: -0.26
-- **MAPE**: 41370074463041.58%
-
-#### Top 5 Important Features
-
-| feature              |   importance |
-|:---------------------|-------------:|
-| lifestyle_risk_score |    0.136139  |
-| country_UK           |    0.0754112 |
-| country_Canada       |    0.0666563 |
-| total_conditions     |    0.0662534 |
-| gender_False         |    0.0541064 |
-
-#### Key Findings
-
-- Lifestyle factors and questionnaire responses are strong predictors of future claims
-- Country of origin has significant predictive power
-- Total health conditions reported by members is a key indicator
-- Gender and age also play notable roles in predicting claims
-- The negative R² suggests that member-only attributes are insufficient for accurate predictions without claim history
-
-### Visualizations
-
-#### Predictions vs Actual
-![Predictions vs Actual](visualizations/unbiased_model/predictions_vs_actual.png)
-
-**Analysis:** This scatter plot compares the model's predictions against actual claim amounts:
-- Large dispersion indicates challenges in predicting claim amounts using only member attributes
-- Predictions tend to cluster toward the mean, showing limited predictive power
-- The unbiased approach reveals the difficulty in predicting claims without historical claims data
-
-#### Feature Importance
-![Feature Importance](visualizations/unbiased_model/feature_importance.png)
-
-**Analysis:** This bar chart shows the top predictive features ranked by importance:
-- Lifestyle risk score derived from questionnaire responses is the strongest predictor
-- Geographic factors (country of origin) significantly influence claim amounts
-- Questionnaire-based health conditions demonstrate predictive value
-- Gender and age-related features appear throughout the important features
-
-#### Regression Confusion Matrix
-![Regression Confusion Matrix](visualizations/unbiased_model/regression_confusion_matrix.png)
-
-**Analysis:** The regression confusion matrix shows:
-- Classification of predictions into value ranges
-- Areas where the model most frequently misclassifies claim amounts
-- Overall pattern of prediction accuracy across different claim value ranges
-
-## Implementation Details
-
-### Member-Based Feature Engineering
-
-The model extracts the following feature categories from member data:
-
-1. **Demographic Features**:
-   - Age and age groups
-   - Gender
-   - Country of origin
-
-2. **Policy Features**:
-   - Policy duration
-   - Policy duration categories
-
-3. **Health Indicators**:
-   - BMI and BMI categories 
-   - Questionnaire-derived health scores
-
-4. **Derived Health Scores**:
-   - Chronic condition score
-   - Cancer risk score
-   - Lifestyle risk score
-   - Overall health risk score
-
-5. **Interaction Features**:
-   - Age x BMI interaction
-   - Age x chronic condition interaction
-
-### Training Strategy
-- XGBoost regression with hyperparameter optimization
-- Proper temporal validation using 6-month forward cutoff
-- Careful feature cleaning to ensure XGBoost compatibility
-- Comprehensive error analysis to understand model limitations
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Data](#data)
+- [Running the Prediction Pipeline](#running-the-prediction-pipeline)
+- [Running Tests](#running-tests)
+- [Key Components](#key-components)
+- [Model Information](#model-information)
+- [Fairness and Bias Mitigation](#fairness-and-bias-mitigation)
+- [Explainability](#explainability)
+- [License](#license)
 
 ## Project Structure
-- `member_feature_engineering.py`: Extracts features from member data only
-- `run_unbiased_modeling.py`: Pipeline for unbiased modeling approach
-- `xgboost_modeling.py`: XGBoost training, evaluation, and feature importance
-- `error_analysis.py`: Comprehensive error analysis and visualization tools
-- `data_preparation.py`: Data loading and preprocessing
 
-## Usage Instructions
-
-1. Create a virtual environment (recommended):
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+├── data/                   # Data files
+│   ├── raw/                # Raw data files
+│   └── processed/          # Processed data files
+├── models/                 # Trained models
+├── notebooks/              # Jupyter notebooks
+├── outputs/                # Output files
+│   ├── figures/            # Visualizations
+│   └── tables/             # Generated tables and reports
+├── src/                    # Source code
+│   ├── data/               # Data processing modules
+│   ├── features/           # Feature engineering modules
+│   ├── models/             # Model training and evaluation modules
+│   └── visualization/      # Visualization modules
+├── tests/                  # Test files
+└── docs/                   # Documentation
 ```
 
-2. Install dependencies:
+## Installation
+
+To set up the project:
+
 ```bash
+# Clone the repository
+git clone https://github.com/your-username/passportcard-insurance-claims.git
+cd passportcard-insurance-claims
+
+# Create a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows, use: venv\Scripts\activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-3. Run the unbiased modeling pipeline:
+## Data
+
+The system uses two main data sources:
+
+1. **Claims Data**: Historical claims made by policyholders, including amount, service date, service type, etc.
+2. **Member Data**: Information about policyholders, including demographics, policy details, and questionnaire responses.
+
+## Running the Prediction Pipeline
+
+To run the full prediction pipeline:
+
 ```bash
-python run_unbiased_modeling.py
+# Run the end-to-end prediction pipeline
+python src/run_prediction_pipeline.py
+
+# Force retraining even if model exists (optional)
+python src/run_prediction_pipeline.py --force-train
 ```
 
-4. The results will be saved to:
-   - `visualizations/unbiased_model/`: Contains all plots and visualizations
-   - `feature_importance_unbiased.csv`: Feature importance rankings
-   - `best_unbiased_model.pkl`: Trained model for deployment
-   - `unbiased_model_metrics.txt`: Performance metrics
+The pipeline performs the following steps:
+1. Load and preprocess claims and member data
+2. Engineer features from the data
+3. Train a model or load a previously trained model
+4. Make predictions
+5. Analyze results and generate visualizations
 
-## Conclusions and Future Work
+Prediction results are saved to:
+- `outputs/tables/prediction_results.csv`
+- `outputs/figures/predictions/`
 
-### Key Takeaways
-- Member-only attributes provide some predictive power but are insufficient for accurate predictions
-- Lifestyle factors and health indicators from questionnaires are the strongest predictors
-- Country of origin and demographic factors have significant influence
-- Unbiased modeling reveals the inherent challenge in insurance claim prediction without claims history
+## Running Tests
 
-### Future Improvements
-- Collect more detailed member health data to improve prediction accuracy
-- Develop hybrid models that balance historical claims with member attributes
-- Explore more sophisticated feature interactions
-- Implement specialized models for different claim types or service categories
-- Integrate external data sources (e.g., geographic health trends)
+To run all tests:
+
+```bash
+python run_tests.py
+```
+
+For more specific test runs:
+
+```bash
+# Run with verbose output
+python run_tests.py --verbose
+
+# Run a specific test class
+python run_tests.py --test TestPredictionPipeline
+```
+
+See [tests/README.md](tests/README.md) for more information on testing.
+
+## Key Components
+
+### Data Preparation
+
+- `enhanced_data_preparation.py`: Advanced data cleaning and preprocessing
+- `enhanced_feature_engineering.py`: Feature creation and transformation
+
+### Feature Engineering
+
+- `advanced_temporal_features.py`: Time-based feature extraction
+- `enhanced_risk_scores.py`: Risk score calculation based on member attributes
+
+### Modeling
+
+- `xgboost_modeling.py`: XGBoost model training and evaluation
+- `advanced_modeling.py`: Advanced modeling techniques and hyperparameter optimization
+
+### Analysis
+
+- `error_analysis.py`: Prediction error analysis
+- `fairness_analysis.py`: Fairness metrics and bias detection
+- `explainability.py`: Model explainability using SHAP values
+
+## Model Information
+
+The primary model used is XGBoost, chosen for its:
+- High predictive performance on tabular data
+- Ability to handle missing values
+- Feature importance ranking
+- Non-linear relationship modeling
+
+Key features influencing predictions include:
+- Member questionnaire responses
+- Past claim behavior
+- Demographics
+- Policy attributes
+
+## Fairness and Bias Mitigation
+
+The system includes tools to detect and mitigate unfair bias:
+- Demographic parity analysis
+- Group fairness metrics
+- Bias mitigation techniques:
+  - Sample weighting
+  - Adversarial debiasing
+  - Post-processing calibration
+
+## Explainability
+
+Model predictions are explained using:
+- SHAP (SHapley Additive exPlanations) values
+- Feature importance rankings
+- Partial dependence plots
+- Prediction error analysis
 
 ## License
-This project is proprietary and confidential. All rights reserved. 
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Recent Updates
+
+### Code Cleanup and Refactoring (2023-04-07)
+
+The codebase has been significantly cleaned up and refactored to improve maintainability and reduce duplication:
+
+1. **Consolidated Pipeline**: Multiple overlapping run scripts have been consolidated into a single unified pipeline in `src/run_prediction_pipeline.py`.
+
+2. **Simplified Entry Point**: Added a single entry point script (`main.py`) in the root directory that provides a clean interface to the pipeline with various command-line options.
+
+3. **Removed Unused Files**: Empty notebook files and redundant scripts have been removed to simplify the codebase.
+
+4. **Improved Testing**: Added comprehensive tests for the consolidated pipeline in `tests/test_pipeline.py`.
+
+To run the consolidated pipeline:
+
+```bash
+# Run the full pipeline with all features
+python main.py
+
+# Run with basic features only
+python main.py --basic-features
+
+# Force training a new model
+python main.py --force-train
+
+# Skip business report generation
+python main.py --no-report
+
+# Run with test data (smaller dataset)
+python main.py --test
+```
+
+See the CHANGELOG.md for a full list of changes. 

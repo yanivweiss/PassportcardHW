@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.2.0] - 2023-04-07
+
+### Removed
+- Removed unused and empty notebook files
+- Removed redundant run scripts with overlapping functionality
+
+### Changed
+- Consolidated multiple run scripts into a unified pipeline
+- Centralized common utility functions into shared modules
+- Updated import paths for better code organization
+- Created a single entry point script in the root directory (main.py)
+
+### Added
+- Added comprehensive test for the consolidated pipeline
+- Added command-line options to control pipeline behavior
+
+## [3.1.0] - 2025-04-05
+
+### Added
+- Repository reorganization for better structure and maintainability
+  - Organized repository into a standardized directory structure
+  - Created clear separation between code, data, outputs, and documentation
+  - Added dedicated directories for models, tests, and outputs
+  - Moved visualization files to outputs/figures directory
+  - Reorganized Python modules into appropriate subdirectories in src/
+
+### Changed
+- Updated README.md to document the new repository structure
+- Updated file paths in documentation and code references
+- Consolidated related files into appropriate directories
+
 ## [3.0.0] - 2025-04-05
 
 ### Added
@@ -111,207 +142,74 @@ All notable changes to this project will be documented in this file.
 - Improved metric calculations for better evaluation accuracy
 - Added more robust error handling throughout the pipeline
 
-## [1.2.0] - 2023-04-07
+## [2.1.0] - 2023-04-05
 
 ### Added
-- Advanced temporal features with sophisticated time series analysis
-  - Added multi-window temporal features (30d, 60d, 90d, 180d, 365d)
-  - Implemented statistical seasonality detection using seasonal decomposition
-  - Added volatility metrics to capture claims variability over time
-  - Created acceleration/deceleration indicators for trend analysis
-- Enhanced risk scoring system
-  - Implemented medically-weighted risk factors for chronic conditions
-  - Added clustering-based risk segmentation
-  - Created normalized risk scores scaled to 0-100 for easier interpretation
-  - Implemented PCA-based dimension reduction for questionnaire data
-- Advanced XGBoost modeling
-  - Added advanced hyperparameter tuning with randomized search
-  - Implemented early stopping and learning rate scheduling
-  - Added detailed visualization of model learning curves
-  - Created feature importance analysis tools
-- Comprehensive business analysis and reporting
-  - Developed advanced business recommendations with implementation steps
-  - Created ROI analysis for proposed initiatives
-  - Added phased implementation roadmap
-  - Created visualizations for business insights
-
-### Improved
-- Feature engineering pipeline
-  - Integrated all feature types (basic, enhanced, temporal, risk) into a unified framework
-  - Added feature interactions between risk scores and claim metrics
-  - Improved categorical feature handling
-- Model training and evaluation
-  - Added more robust cross-validation
-  - Enhanced prediction visualization and analysis
-  - Improved model persistence and saving
-- Testing
-  - Added comprehensive tests for all new modules
-  - Created synthetic test data generators
-  - Added validation checks for all feature engineering steps
-
-### Documentation
-- Enhanced business report with actionable recommendations
-- Added visualization of business insights
-- Updated code documentation for all new modules
-- Added implementation roadmap with expected ROI
-
-## [1.1.0] - 2023-04-06
-
-### Added
-- Comprehensive unit testing suite
-  - Added tests for data preparation
-  - Added tests for feature engineering
-  - Added tests for modeling functionality
-- Test data generation capabilities
-  - Created synthetic claims data generator
-  - Created synthetic member profiles generator
-- Improved error handling for optional dependencies
-  - Added graceful fallback when SHAP is not available
-  - Implemented alternative feature importance calculations
+- End-to-end prediction pipeline in `src/run_prediction_pipeline.py`
+- Comprehensive test suite in `tests/test_prediction_pipeline.py`
+- Test runner script in `run_tests.py` for running all tests
+- Testing documentation in `tests/README.md`
+- Performance optimizations for DataFrame operations in prediction functions
+- Residual plot visualization for error analysis
+- Improved error handling throughout the pipeline
+- Negative prediction warnings
 
 ### Fixed
-- Resolved datetime handling with numpy integer types
-- Fixed feature selection for high-dimensional data
-- Improved model compatibility with various data formats
-
-### Documentation
-- Updated README with comprehensive setup instructions
-- Added detailed CHANGELOG
-- Enhanced business report with actionable insights
-- Added code documentation for all major functions
-
-## [1.0.0] - 2023-04-05
-
-### Added
-- Initial implementation of PassportCard claims prediction model
-
-### Enhanced Features
-- Created sophisticated temporal features for better trend analysis
-  - Added claim acceleration and seasonality detection
-  - Implemented quarter-over-quarter and year-over-year growth metrics
-  - Added recency-based features for recent claims behavior
-- Added service type profiling with entropy measurement
-- Implemented comprehensive risk scoring system
-  - Created category-specific risk scores (chronic, cancer, lifestyle)
-  - Added demographic risk factors (age, BMI)
-  - Implemented PCA-based risk component extraction
-- Added interaction terms between risk scores and claim metrics
-- Implemented non-linear transformations for key features
-  - Added log transformations for skewed features
-  - Created square and square root transformations
-
-### Model Improvements
-- Implemented an ensemble modeling approach
-  - Integrated LightGBM, XGBoost, Random Forest, and Gradient Boosting
-  - Added voting and stacking ensemble methods
-- Added hyperparameter tuning capabilities
-  - Implemented grid search for basic tuning
-  - Added randomized search for advanced tuning
-- Added automatic feature selection to improve model performance
-  - Implemented importance-based selection
-  - Added SelectFromModel for automatic thresholding
-- Enhanced model evaluation with additional metrics
-  - Added MAPE (Mean Absolute Percentage Error) 
-  - Enhanced R² and RMSE reporting
-
-### Visualizations and Interpretation
-- Added model interpretation capabilities
-  - Created feature importance visualization
-  - Implemented feature distribution analysis
-  - Added correlation analysis for feature relationships
-- Created comprehensive business report with recommendations
-  - Added risk assessment guidelines
-  - Included premium optimization strategies
-  - Provided customer segmentation approach
-  - Outlined financial planning applications
-
-### Technical Improvements
-- Implemented modular code architecture
-  - Separated data preparation, feature engineering, and modeling
-  - Created enhanced features module
-  - Added advanced modeling module
-- Added error handling and validation checks
-- Implemented model saving and loading capabilities
-- Added CSV export for enhanced features
-- Created visualization directory for storing plot outputs
-
-## 2023-04-05
-### Added
-- Comprehensive fairness analysis module for evaluating model fairness across different demographic groups
-- Explainability module with SHAP-based feature importance visualization
-- Bias mitigation techniques including reweighting, adversarial debiasing, and fairness constraints
-- Model auditing framework for regularly monitoring model performance across different segments
-- Unit tests for all new components
+- DataFrame fragmentation warning in prediction code
+- FutureWarning about numeric_only in DataFrame.corr()
+- File path references to match new directory structure
+- Edge cases in MAPE calculation for small target values
+- Error visualization file paths
 
 ### Changed
-- Improved feature selection workflow
-- Enhanced temporal cross-validation for better model evaluation
-- Removed SMOTE implementation (as it's more suitable for classification than regression)
-- Refactored code for better modularity and maintainability
+- Improved feature creation for better performance
+- Enhanced error analysis with more comprehensive metrics
+- More detailed model evaluation in result reports
+
+## [2.0.0] - 2023-04-05
+
+### Changed
+- Reorganized project structure
+- Moved all Python files to `src/` directory
+- Moved all test files to `tests/` directory
+- Moved model files to `models/` directory
+- Moved CSV files to `data/processed/` directory
+- Moved image files to `outputs/figures/` directory
+- Moved documentation to `docs/` directory
+- Moved Jupyter notebooks to `notebooks/` directory
+- Updated all file paths in code to match new directory structure
+- Updated README.md to reflect new repository structure
+
+## [1.2.0] - 2023-04-02
+
+### Added
+- Fairness analysis for model evaluation
+- Group fairness metrics
+- Bias detection and visualization tools
+- Post-processing calibration for bias mitigation
 
 ### Fixed
-- Unicode character handling in reports
-- Various minor bugs and edge cases
-- Improved error handling throughout the codebase
+- Multiple minor bugs in feature engineering
+- Improved error handling in model training
 
-## 2023-03-22
+## [1.1.0] - 2023-03-30
+
 ### Added
-- Advanced feature engineering techniques
-  - Customer behavior features
-  - Service distribution analysis
-  - Cyclical encoding for date features
-  - Questionnaire response analysis
-  - Claims pattern recognition
-  - Recency, frequency, and monetary features
-  - Risk score calculations
-- Enhanced data preprocessing
-  - Advanced outlier detection
-  - Better missing value handling
-  - KNN imputation
-  - Feature scaling options
-- Expanded model evaluation
-  - RMSE, MAE, R², MAPE metrics
-  - Error analysis tools
-  - Regression confusion matrix
-  - Temporal cross-validation
-- Feature selection methods
-  - XGBoost importance
-  - Lasso feature selection
-  - Mutual information
-  - Recursive feature elimination
-- SMOTE implementation for imbalanced regression data
-- Focal loss implementation for regression
-- Comprehensive testing suite
-- Visualizations for all major components
+- Unbiased modeling approach using only member attributes
+- Temporal feature engineering without using future information
+- Explainability tools including SHAP values
+- Enhanced error analysis visualizations
 
 ### Changed
-- Refactored pipeline for better modularity
-- Improved documentation and code comments
-- Enhanced error handling
+- Removed dependency on historical claims for prediction features
+- Improved feature selection methodology
+- Updated visualization styles for better readability
 
-## 2023-03-10
+## [1.0.0] - 2023-03-15
+
 ### Added
-- Initial version with basic data preparation and feature engineering
-- Simple model training script
-- Base feature set
-- Basic visualizations
-
-## [1.3.3] - 2023-04-07
-
-### Removed
-- Removed Custom Focal Loss implementation as it was not needed
-- Simplified the codebase by focusing on standard loss functions
-
-### Fixed
-- Fixed test cases to match the updated codebase
-- Ensured all tests pass after removal of focal loss
-
-## [1.3.2] - 2023-04-07
-
-### Changed
-- Moved Model Auditing from a standalone module to the Business Recommendations section of README.md
-- Fixed issues with explainability module:
-  - Improved SHAP value handling for different model types
-  - Enhanced error handling in comparison of global and local explanations
-  - Better support for different SHAP value shapes and formats
-- Fixed potential encoding issues in report generation
+- Initial release of insurance claims prediction system
+- Basic feature engineering
+- XGBoost regression model
+- Basic evaluation metrics
+- Visualization of model performance
