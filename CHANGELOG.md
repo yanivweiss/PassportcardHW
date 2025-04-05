@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.2.3] - 2023-04-06
+
+### Fixed
+- Fixed JSON structure in 2_PassportCard_Model_Development.ipynb to resolve "Notebook does not appear to be JSON" error
+- Corrected formatting in the notebook's first markdown cell by properly separating the title from the description
+
+## [3.2.2] - 2023-04-05
+
+### Added
+- Created run_jupyter.py script to fix Jupyter Notebook installation issues:
+  - Adds missing notebook.app module structure if needed
+  - Automatically installs and upgrades necessary Jupyter packages
+  - Provides multiple fallback launch methods to ensure Jupyter starts correctly
+
 ## [3.2.1] - 2023-04-05
 
 ### Removed
