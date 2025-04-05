@@ -203,18 +203,18 @@ All notable changes to this project will be documented in this file.
 - Multiple minor bugs in feature engineering
 - Improved error handling in model training
 
-## [1.1.0] - 2023-03-30
+## [1.1.0] - 2023-04-07
 
 ### Added
-- Unbiased modeling approach using only member attributes
-- Temporal feature engineering without using future information
-- Explainability tools including SHAP values
-- Enhanced error analysis visualizations
+- Created comprehensive Jupyter notebooks from README content:
+  - `PassportCard_Insurance_Claims_Prediction.ipynb`: Main notebook with data exploration and cleaning
+  - `PassportCard_Model_Development.ipynb`: Focused on model development and evaluation
+  - `PassportCard_Business_Applications.ipynb`: Demonstrates business applications of the model
 
-### Changed
-- Removed dependency on historical claims for prediction features
-- Improved feature selection methodology
-- Updated visualization styles for better readability
+### Improved
+- Enhanced accessibility of project information through interactive notebooks
+- Added visualizations and interactive elements to improve understanding
+- Provided executable code to reproduce analysis steps and insights
 
 ## [1.0.0] - 2023-03-15
 

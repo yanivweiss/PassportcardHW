@@ -10,7 +10,7 @@ Our model achieved the following performance metrics:
 
 | Metric | Value |
 |--------|-------|
-| rmse | 1086.7242 |
-| mae | 839.0140 |
-| r2 | -0.0083 |
-| mape | 159.6654 |
+| rmse | 197.5634 |
+| mae | 156.2348 |
+| r2 | -1.5345 |
+| mape | 94.7706 |

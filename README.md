@@ -25,6 +25,7 @@ The system uses historical claims data and member information to predict the tot
 - [Limitations and Assumptions](#limitations-and-assumptions)
 - [Recent Updates](#recent-updates)
 - [License](#license)
+- [Interactive Jupyter Notebooks](#interactive-jupyter-notebooks)
 
 ## Project Structure
 
@@ -981,6 +982,29 @@ The codebase has been significantly cleaned up and refactored to improve maintai
 4. **Improved Testing**: Added comprehensive tests for the consolidated pipeline in `tests/test_pipeline.py`.
 
 See the CHANGELOG.md for a full list of changes.
+
+## Interactive Jupyter Notebooks
+
+For a more interactive exploration of the project, we've created a set of Jupyter notebooks that allow you to run the analysis, visualize the data, and understand the model's predictions:
+
+1. **[PassportCard_Insurance_Claims_Prediction.ipynb](notebooks/PassportCard_Insurance_Claims_Prediction.ipynb)**: Main notebook covering data exploration and cleaning
+2. **[PassportCard_Model_Development.ipynb](notebooks/PassportCard_Model_Development.ipynb)**: Focuses on model development and evaluation
+3. **[PassportCard_Business_Applications.ipynb](notebooks/PassportCard_Business_Applications.ipynb)**: Demonstrates business applications of the model
+
+These notebooks provide:
+- Interactive visualizations
+- Step-by-step execution of the data processing and modeling pipeline
+- Detailed explanations of each analysis step
+- The ability to modify parameters and see immediate results
+
+To use these notebooks, ensure you have Jupyter installed:
+
+```bash
+pip install jupyter
+jupyter notebook
+```
+
+See [notebooks/README.md](notebooks/README.md) for more details.
 
 ## License
 

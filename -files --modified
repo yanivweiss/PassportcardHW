@@ -1,0 +1,13 @@
+CHANGELOG.md
+README.md
+notebooks/README.md
+outputs/figures/error_analysis/error_by_TotPaymentUSD_sum_bins.png
+outputs/figures/error_distribution.png
+outputs/figures/predictions/actual_vs_predicted.png
+outputs/figures/predictions/prediction_distribution.png
+outputs/figures/predictions/regression_confusion_matrix.png
+outputs/figures/predictions/residual_plot.png
+reports/business_report.md
+visualizations/customer_behavior/claim_amount_volatility_distribution.png
+visualizations/customer_behavior/claim_frequency_distribution.png
+visualizations/customer_behavior/claim_regularity_distribution.png
