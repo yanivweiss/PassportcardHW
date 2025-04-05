@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.4.0] - 2023-04-05
+
+### Added
+- Converted README.md content into comprehensive interactive Jupyter notebooks:
+  - `PassportCard_Insurance_Claims_Prediction.ipynb`: Data exploration and cleaning
+  - `PassportCard_Model_Development.ipynb`: Model development and evaluation
+  - `PassportCard_Business_Applications.ipynb`: Business applications
+- Created unit tests in `tests/test_notebook_generation.py` to verify notebook validity
+- Updated notebooks directory structure and documentation
+- Fixed JSON structure issues in notebooks for proper Jupyter compatibility
+
+### Fixed
+- Updated `.gitignore` to track Jupyter notebook files
+- Ensured all notebooks have valid nbformat structure
+- Created comprehensive notebook generation script
+
 ## [1.3.0] - 2023-04-07
 
 ### Added
