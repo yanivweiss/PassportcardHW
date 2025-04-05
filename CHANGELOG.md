@@ -19,6 +19,13 @@
   - JUPYTER_GUIDE.md
   - launch_jupyter.py
   - run_jupyter.py
+- Removed additional utility and setup files:
+  - passportcard_fix_all.py
+  - setup.bat
+  - setup.py
+  - update_notebook_paths.py
+  - update_notebook_sequence.py
+  - debug_script.py
 
 ## [1.4.0] - 2023-04-05
 
