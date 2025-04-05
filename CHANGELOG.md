@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.1] - 2025-04-05
+
+### Changed
+- Completely rewrote README.md to focus on the unbiased modeling approach
+- Emphasized member-only feature engineering and its results
+- Added detailed analysis of the model performance and feature importance
+- Updated visualization descriptions to reflect the unbiased approach
+
 ## [2.0.0] - 2025-04-05
 
 ### Added
