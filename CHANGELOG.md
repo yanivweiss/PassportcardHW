@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.4] - 2023-04-05
+
+### Fixed
+- Updated README.md image paths to use raw.githubusercontent.com URLs (https://raw.githubusercontent.com/yanivweiss/PassportcardHW/main/)
+- Changed from github.com/raw format to raw.githubusercontent.com format for improved image rendering
+- This format directly accesses GitHub's raw content servers for more reliable embedding
+
 ## [1.2.3] - 2023-04-05
 
 ### Fixed
