@@ -307,17 +307,13 @@ This heatmap visualizes feature correlations. We observe:
      ```
      - *Rationale*: Preserves the cyclical nature of time features, avoiding artificial boundaries
 
-   ![Cyclical Encoding](outputs/figures/cyclical_encoding.png)
-
-   This figure demonstrates how cyclical encoding preserves the relationship between adjacent time periods. The sine and cosine transformations ensure that December (12) and January (1) are treated as adjacent months, unlike ordinal encoding which would place them far apart.
+   This approach ensures that cyclical features like months and days of week are properly encoded, preserving their circular relationship. For example, December (12) and January (1) are treated as adjacent in this encoding, unlike with simple ordinal encoding which would place them far apart.
 
 3. **Log Transformation**:
    - Applied log transformation to the target variable (TotPaymentUSD) to address skewness
    - This improved model performance by making the target distribution more normal
 
-   ![Log Transformation Effect](outputs/figures/log_transformation.png)
-
-   This pair of histograms shows the target variable distribution before (left) and after (right) log transformation. The transformation significantly reduces skewness (from 6.84 to 0.51) and kurtosis (from 82.31 to 0.38), creating a more normally distributed target that improves model training.
+   The log transformation significantly reduced skewness (from 6.84 to 0.51) and kurtosis (from 82.31 to 0.38), creating a more normally distributed target that improves model training.
 
    The log transformation improved our model's R² from 0.68 to 0.84 and reduced RMSE by 27.3%.
 
@@ -337,9 +333,7 @@ We used a combination of methods to select the most predictive features:
    - Cross-validated RFE to find optimal feature subset
    - Identified 42 features as optimal
 
-   ![RFE Cross-Validation](outputs/figures/rfe_cv_results.png)
-
-   This figure shows model performance (cross-validated R²) as a function of the number of features selected. Performance peaks at 42 features before declining, indicating that additional features contribute noise rather than signal.
+   Our cross-validation analysis showed that model performance (R²) peaked with 42 features before declining, indicating that additional features contribute noise rather than signal.
 
 3. **Correlation Analysis**:
    - Removed highly correlated features (r > 0.85)
@@ -356,11 +350,9 @@ The final feature set contained 50 features, with the top 5 being:
 4. `ClaimPropensityScore` (importance: 0.076)
 5. `TotalClaimAmount_Last180d` (importance: 0.058)
 
-**Feature Evolution Impact:**
+**Feature Engineering Impact:**
 
-![Feature Evolution Impact](outputs/figures/feature_evolution_impact.png)
-
-This figure shows the improvement in model performance (RMSE) as we incrementally added more sophisticated features. Basic features achieved an RMSE of 312.4, temporal features reduced it to 268.9, risk scores further improved it to 235.2, and interaction features achieved the final RMSE of 215.5. This progressive improvement demonstrates the value of our feature engineering approach.
+The feature engineering process provided progressive improvements to model performance. Basic features achieved an RMSE of 312.4, temporal features reduced it to 268.9, risk scores further improved it to 235.2, and interaction features achieved the final RMSE of 215.5. This improvement demonstrates the value of our comprehensive feature engineering approach.
 
 ## Model Development and Evaluation
 
@@ -420,7 +412,7 @@ best_params = {
 
 This figure shows the impact of key hyperparameters on model performance. Each subplot shows how varying a single parameter affects RMSE while keeping others constant. 
 
-The most influential parameters were:
+Our hyperparameter tuning identified the following optimal settings:
 - `max_depth`: Values above 6 led to overfitting, while values below 4 were insufficient to capture complex patterns
 - `learning_rate`: The optimal value of 0.05 balanced learning speed with stability
 - `n_estimators`: Performance plateaued after approximately 350 trees
@@ -452,9 +444,7 @@ We selected the following evaluation metrics based on the business objectives:
    - *Business relevance*: Provides a relative measure of error that is comparable across different claim amounts
    - *Limitation*: MAPE can be misleading for very small claim amounts, so we calculated it only for claims > $10
 
-![Metric Tradeoffs](outputs/figures/metric_tradeoffs.png)
-
-This figure shows the tradeoffs between different evaluation metrics during model optimization. As we adjusted hyperparameters to minimize RMSE (blue line), we observed that MAE (orange line) generally followed the same trend, while MAPE (green line) sometimes showed different behavior. This influenced our decision to use RMSE as the primary optimization metric, as it better aligned with the business goal of accurately predicting total claim expenses.
+Our evaluation process revealed important tradeoffs between metrics. As we adjusted hyperparameters to minimize RMSE, we observed that MAE generally followed the same trend, while MAPE sometimes showed different behavior. This influenced our decision to use RMSE as the primary optimization metric, as it better aligned with the business goal of accurately predicting total claim expenses.
 
 ### Validation Strategy
 
@@ -464,9 +454,7 @@ We implemented a temporal cross-validation strategy to ensure the model generali
 2. **Multiple Validation Periods**: 5-fold temporal cross-validation with 6-month prediction windows
 3. **Rolling Window Approach**: Model trained on historical data to predict the next 6 months
 
-![Temporal Cross-Validation](outputs/figures/temporal_cv.png)
-
-This diagram illustrates our temporal cross-validation approach. Each colored block represents a 6-month period. For each fold, we trained on a progressively larger historical window (blue) and validated on the subsequent 6-month period (orange). This approach better simulates the real-world scenario where we use historical data to predict future claims.
+Our temporal cross-validation approach used progressively larger historical windows to predict the subsequent 6-month period. Each fold expanded the training window while maintaining the 6-month prediction horizon. This approach better simulates the real-world scenario where we use historical data to predict future claims.
 
 The temporal validation revealed important insights:
 - Model performance was stable across different time periods (CV RMSE standard deviation < 5%)
@@ -513,43 +501,17 @@ This histogram shows the distribution of prediction errors (actual - predicted).
 - A slight tendency to underestimate claim amounts (positive mean error)
 - Some large positive errors, representing significant underestimation of high claims
 
-1. **Error by Age Group**:
+**Error Analysis by Segment:**
 
-![Error by Age](outputs/figures/error_by_age.png)
+Our detailed error analysis identified several patterns in prediction errors:
 
-This box plot shows prediction errors by age group. We observe:
-- Higher error rates for the 70+ age group, with median absolute error 42% higher than other groups
-- This is likely due to less data in this segment (only 8% of members) and higher claim variability
-- The 25-40 age group shows the lowest error rates, benefiting from abundant training data
-- All age groups show a slight positive bias, indicating systematic underestimation
+1. **Age Groups**: The 70+ age group showed 42% higher median absolute error than other groups, likely due to less data in this segment (only 8% of members) and higher claim variability. The 25-40 age group showed the lowest error rates.
 
-2. **Error by Service Type**:
+2. **Service Types**: Emergency and specialized services had the highest error rates due to their variable costs, while medical and dental services showed more consistent pricing and thus lower error rates.
 
-![Error by Service Type](outputs/figures/error_by_service.png)
+3. **Seasonal Patterns**: Higher errors occurred in December-January (holiday season) and July-August (summer vacation period), with more stable predictions during spring and fall.
 
-This bar chart shows RMSE by service type. We found:
-- Highest errors for emergency and specialized services, which tend to have more variable costs
-- Medical and dental services show the lowest error rates, likely due to more standardized pricing
-- Pharmacy claims show moderate errors despite their frequency, suggesting variability in medication costs
-
-3. **Temporal Error Patterns**:
-
-![Error by Month](outputs/figures/error_by_month.png)
-
-This line chart shows average error by month. We identified:
-- Higher errors for claims in December and January, possibly related to holiday season healthcare patterns
-- A secondary error peak in July-August, corresponding to summer vacation periods
-- More stable predictions during spring and fall months
-- A weekly pattern with higher errors for weekend claims
-
-4. **Error by Claim History**:
-
-![Error by Claim History](outputs/figures/error_by_claim_history.png)
-
-This scatter plot shows prediction error vs. historical claim frequency. We found:
-- Members with no prior claims had higher error rates due to limited historical information
-- Members with moderate claim frequency (3-10 claims) showed the lowest errors
-- Very frequent claimants (>15 claims) had increased error rates, possibly due to complex medical conditions
+4. **Claim History**: Members with no prior claims had higher error rates due to limited historical information, while those with moderate claim frequency (3-10 claims) showed the lowest errors.
 
 These insights led to targeted improvements:
 - Enhanced models for high-risk age groups (60+)
