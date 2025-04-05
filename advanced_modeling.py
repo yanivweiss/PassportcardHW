@@ -1,548 +1,548 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split, TimeSeriesSplit, GridSearchCV, RandomizedSearchCV
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-from sklearn.feature_selection import SelectFromModel
 import xgboost as xgb
-import lightgbm as lgb
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, VotingRegressor, StackingRegressor
-from sklearn.linear_model import Lasso, Ridge, ElasticNet
-from sklearn.neural_network import MLPRegressor
+from sklearn.model_selection import TimeSeriesSplit, cross_val_score, GridSearchCV
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import SelectFromModel, SelectKBest, f_regression, RFE
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import Lasso
+from imblearn.over_sampling import SMOTE
+import matplotlib.pyplot as plt
+import seaborn as sns
+import os
 import joblib
-from datetime import datetime
+from datetime import datetime, timedelta
 
-# Check if shap is available (optional dependency)
-try:
-    import shap
-    SHAP_AVAILABLE = True
-except ImportError:
-    SHAP_AVAILABLE = False
-    print("SHAP is not available. Feature importance will use built-in methods instead.")
-
-def prepare_model_data(features_df, target_col='future_6m_claims', test_size=0.2):
-    """Prepare data for modeling with optional feature selection"""
-    # Make a copy to avoid modifying the original
-    features_df = features_df.copy()
+def select_features(X, y, method='xgboost', threshold=0.01, k=None, visualize=True):
+    """
+    Select important features using different methods
     
-    # Remove any non-feature columns
-    exclude_cols = ['Member_ID', 'PolicyID', target_col, 'PolicyStartDate', 'PolicyEndDate', 'DateOfBirth']
-    exclude_cols = [col for col in exclude_cols if col in features_df.columns]
-    
-    # Identify and remove datetime columns
-    datetime_cols = []
-    for col in features_df.columns:
-        if pd.api.types.is_datetime64_any_dtype(features_df[col]):
-            if col not in exclude_cols:
-                datetime_cols.append(col)
-                exclude_cols.append(col)
-    
-    if datetime_cols:
-        print(f"Removed datetime columns from feature set: {datetime_cols}")
-    
-    feature_cols = [col for col in features_df.columns if col not in exclude_cols]
-    
-    # Replace infinity values with NaN
-    features_df = features_df.replace([np.inf, -np.inf], np.nan)
-    
-    # Check for NaN values and fill them
-    nan_cols = features_df[feature_cols].columns[features_df[feature_cols].isna().any()].tolist()
-    if nan_cols:
-        print(f"Filling NaN values in {len(nan_cols)} columns")
-        # Fill NaN with 0 for simplicity
-        features_df[feature_cols] = features_df[feature_cols].fillna(0)
-    
-    # Convert categorical columns to numeric
-    categorical_cols = ['CountryOfOrigin', 'PayerType', 'CountryOfDestination', 'Sex']
-    categorical_cols = [col for col in categorical_cols if col in features_df.columns]
-    for col in categorical_cols:
-        features_df[col] = pd.Categorical(features_df[col]).codes
-    
-    # Split features and target
-    X = features_df[feature_cols]
-    y = features_df[target_col]
-    
-    # Split data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
-    
-    # Scale features
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
-    
-    return X_train_scaled, X_test_scaled, y_train, y_test, feature_cols, scaler
-
-def train_lightgbm_model(X_train, y_train, X_test, y_test, params=None, tuning='basic'):
-    """Train a LightGBM model with hyperparameter tuning"""
-    if params is None:
-        params = {
-            'objective': 'regression',
-            'metric': 'rmse',
-            'num_leaves': 31,
-            'learning_rate': 0.05,
-            'feature_fraction': 0.9,
-            'bagging_fraction': 0.8,
-            'bagging_freq': 5,
-            'verbosity': -1
-        }
-    
-    if tuning == 'basic':
-        # Basic hyperparameter tuning
-        param_grid = {
-            'num_leaves': [15, 31, 63],
-            'learning_rate': [0.01, 0.05, 0.1],
-            'n_estimators': [100, 200, 300]
-        }
+    Parameters:
+    -----------
+    X : pandas DataFrame
+        Feature matrix
+    y : pandas Series
+        Target variable
+    method : str
+        Method for feature selection: 'xgboost', 'lasso', 'randomforest', 'kbest', or 'rfe'
+    threshold : float
+        Importance threshold for feature selection (for tree-based methods)
+    k : int, optional
+        Number of features to select (for kbest and rfe methods)
+    visualize : bool
+        Whether to create feature importance visualization
         
-        # Create model
-        lgb_model = lgb.LGBMRegressor(**params)
-        
-        # Grid search
-        grid_search = GridSearchCV(
-            lgb_model,
-            param_grid,
-            cv=3,
-            scoring='neg_root_mean_squared_error',
-            verbose=0
-        )
-        
-        # Train model
-        grid_search.fit(X_train, y_train)
-        
-        # Get best model
-        model = grid_search.best_estimator_
-        best_params = grid_search.best_params_
-        
-    elif tuning == 'advanced':
-        # Advanced hyperparameter tuning
-        param_grid = {
-            'num_leaves': [15, 31, 63, 127],
-            'learning_rate': [0.01, 0.03, 0.05, 0.1],
-            'n_estimators': [100, 200, 300, 400],
-            'max_depth': [-1, 5, 10, 15],
-            'min_child_samples': [5, 10, 20, 30],
-            'subsample': [0.6, 0.8, 1.0],
-            'colsample_bytree': [0.6, 0.8, 1.0]
-        }
-        
-        # Create model
-        lgb_model = lgb.LGBMRegressor(**params)
-        
-        # Random search (more efficient for large param space)
-        random_search = RandomizedSearchCV(
-            lgb_model,
-            param_distributions=param_grid,
-            n_iter=20,
-            cv=3,
-            scoring='neg_root_mean_squared_error',
-            verbose=0,
-            random_state=42
-        )
-        
-        # Train model
-        random_search.fit(X_train, y_train)
-        
-        # Get best model
-        model = random_search.best_estimator_
-        best_params = random_search.best_params_
-        
-    else:
-        # No tuning
-        model = lgb.LGBMRegressor(**params)
-        model.fit(X_train, y_train)
-        best_params = params
+    Returns:
+    --------
+    tuple
+        (selected_features, feature_importances) where feature_importances is a DataFrame with feature names and importance scores
+    """
+    print(f"Selecting features using {method} method...")
+    feature_names = X.columns.tolist()
     
-    # Make predictions
-    y_pred = model.predict(X_test)
-    
-    return model, y_pred, best_params
-
-def train_xgboost_model(X_train, y_train, X_test, y_test, params=None, tuning='basic'):
-    """Train an XGBoost model with hyperparameter tuning"""
-    if params is None:
-        params = {
-            'objective': 'reg:squarederror',
-            'learning_rate': 0.05,
-            'max_depth': 6,
-            'subsample': 0.8,
-            'colsample_bytree': 0.8,
-            'gamma': 0
-        }
-    
-    if tuning == 'basic':
-        # Basic hyperparameter tuning
-        param_grid = {
-            'max_depth': [3, 6, 9],
-            'learning_rate': [0.01, 0.05, 0.1],
-            'n_estimators': [100, 200, 300]
-        }
-        
-        # Create model
-        xgb_model = xgb.XGBRegressor(**params)
-        
-        # Grid search
-        grid_search = GridSearchCV(
-            xgb_model,
-            param_grid,
-            cv=3,
-            scoring='neg_root_mean_squared_error',
-            verbose=0
-        )
-        
-        # Train model
-        grid_search.fit(X_train, y_train)
-        
-        # Get best model
-        model = grid_search.best_estimator_
-        best_params = grid_search.best_params_
-        
-    elif tuning == 'advanced':
-        # Advanced hyperparameter tuning
-        param_grid = {
-            'max_depth': [3, 6, 9, 12],
-            'learning_rate': [0.01, 0.03, 0.05, 0.1],
-            'n_estimators': [100, 200, 300, 400],
-            'subsample': [0.6, 0.8, 1.0],
-            'colsample_bytree': [0.6, 0.8, 1.0],
-            'gamma': [0, 0.1, 0.2, 0.5],
-            'min_child_weight': [1, 3, 5, 7]
-        }
-        
-        # Create model
-        xgb_model = xgb.XGBRegressor(**params)
-        
-        # Random search
-        random_search = RandomizedSearchCV(
-            xgb_model,
-            param_distributions=param_grid,
-            n_iter=20,
-            cv=3,
-            scoring='neg_root_mean_squared_error',
-            verbose=0,
-            random_state=42
-        )
-        
-        # Train model
-        random_search.fit(X_train, y_train)
-        
-        # Get best model
-        model = random_search.best_estimator_
-        best_params = random_search.best_params_
-        
-    else:
-        # No tuning
-        model = xgb.XGBRegressor(**params)
-        model.fit(X_train, y_train)
-        best_params = params
-    
-    # Make predictions
-    y_pred = model.predict(X_test)
-    
-    return model, y_pred, best_params
-
-def train_neural_network(X_train, y_train, X_test, y_test, params=None):
-    """Train a neural network model"""
-    if params is None:
-        params = {
-            'hidden_layer_sizes': (100, 50),
-            'activation': 'relu',
-            'solver': 'adam',
-            'alpha': 0.0001,
-            'learning_rate': 'adaptive',
-            'max_iter': 500,
-            'early_stopping': True,
-            'random_state': 42
-        }
-    
-    # Create and train model
-    model = MLPRegressor(**params)
-    model.fit(X_train, y_train)
-    
-    # Make predictions
-    y_pred = model.predict(X_test)
-    
-    return model, y_pred
-
-def create_ensemble_model(X_train, y_train, X_test, y_test):
-    """Create an ensemble model combining multiple algorithms"""
-    # Create base models
-    lgb_model = lgb.LGBMRegressor(
-        objective='regression',
-        n_estimators=200,
-        learning_rate=0.05,
-        num_leaves=31
-    )
-    
-    xgb_model = xgb.XGBRegressor(
-        objective='reg:squarederror',
-        n_estimators=200,
-        learning_rate=0.05,
-        max_depth=6
-    )
-    
-    rf_model = RandomForestRegressor(
-        n_estimators=200,
-        max_depth=10,
-        random_state=42
-    )
-    
-    gbr_model = GradientBoostingRegressor(
-        n_estimators=200,
-        learning_rate=0.05,
-        max_depth=5,
-        random_state=42
-    )
-    
-    # Try different ensemble strategies
-    
-    # 1. Voting Regressor
-    voting_model = VotingRegressor([
-        ('lgb', lgb_model),
-        ('xgb', xgb_model),
-        ('rf', rf_model),
-        ('gbr', gbr_model)
-    ])
-    
-    voting_model.fit(X_train, y_train)
-    voting_pred = voting_model.predict(X_test)
-    
-    # 2. Stacking Regressor
-    stacking_model = StackingRegressor(
-        estimators=[
-            ('lgb', lgb_model),
-            ('xgb', xgb_model),
-            ('rf', rf_model),
-            ('gbr', gbr_model)
-        ],
-        final_estimator=Ridge(),
-        cv=5
-    )
-    
-    stacking_model.fit(X_train, y_train)
-    stacking_pred = stacking_model.predict(X_test)
-    
-    # Evaluate both models
-    voting_rmse = np.sqrt(mean_squared_error(y_test, voting_pred))
-    stacking_rmse = np.sqrt(mean_squared_error(y_test, stacking_pred))
-    
-    print(f"Voting Ensemble RMSE: {voting_rmse:.2f}")
-    print(f"Stacking Ensemble RMSE: {stacking_rmse:.2f}")
-    
-    # Return the better model
-    if voting_rmse <= stacking_rmse:
-        return voting_model, voting_pred, "Voting"
-    else:
-        return stacking_model, stacking_pred, "Stacking"
-
-def feature_selection(X_train, y_train, X_test, feature_cols, method='lgb'):
-    """Perform feature selection to reduce dimensionality"""
-    if method == 'lgb':
-        # Use LightGBM for feature selection
-        model = lgb.LGBMRegressor(
-            objective='regression',
-            n_estimators=100,
-            learning_rate=0.05,
-            importance_type='gain'
-        )
-        model.fit(X_train, y_train)
-        
-        # Get feature importances
+    if method == 'xgboost':
+        # Use XGBoost's feature importance
+        model = xgb.XGBRegressor(n_estimators=100, random_state=42)
+        model.fit(X, y)
         importances = model.feature_importances_
         
-        # Create DataFrame of feature importances
-        feature_importance = pd.DataFrame({
-            'feature': feature_cols,
+        # Create feature importance DataFrame
+        feature_importances = pd.DataFrame({
+            'feature': feature_names,
             'importance': importances
         }).sort_values('importance', ascending=False)
         
-        # Select top features (e.g., top 50%)
-        top_features = feature_importance.nlargest(int(len(feature_cols) * 0.5), 'importance')['feature'].tolist()
-        
-        # Get indices of top features
-        top_indices = [feature_cols.index(f) for f in top_features]
-        
-        # Filter X_train and X_test
-        X_train_selected = X_train[:, top_indices]
-        X_test_selected = X_test[:, top_indices]
-        
-        return X_train_selected, X_test_selected, top_features
+        # Select features above threshold
+        selected_features = feature_importances[feature_importances['importance'] > threshold]['feature'].tolist()
     
-    elif method == 'auto':
-        # Automatic feature selection using SelectFromModel
-        model = xgb.XGBRegressor(n_estimators=100, random_state=42)
-        selector = SelectFromModel(model, threshold='median')
+    elif method == 'lasso':
+        # Use Lasso for feature selection
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+        model = Lasso(alpha=0.01, random_state=42)
+        model.fit(X_scaled, y)
+        importances = np.abs(model.coef_)
         
-        X_train_selected = selector.fit_transform(X_train, y_train)
-        X_test_selected = selector.transform(X_test)
+        # Create feature importance DataFrame
+        feature_importances = pd.DataFrame({
+            'feature': feature_names,
+            'importance': importances
+        }).sort_values('importance', ascending=False)
         
-        # Get names of selected features
-        mask = selector.get_support()
-        top_features = [feature_cols[i] for i in range(len(feature_cols)) if mask[i]]
-        
-        return X_train_selected, X_test_selected, top_features
+        # Select non-zero coefficient features
+        selected_features = [feature_names[i] for i in range(len(feature_names)) if importances[i] > 0]
     
-    else:
-        # No feature selection
-        return X_train, X_test, feature_cols
-
-def evaluate_model(y_true, y_pred):
-    """Evaluate model performance with multiple metrics"""
-    metrics = {
-        'RMSE': np.sqrt(mean_squared_error(y_true, y_pred)),
-        'MAE': mean_absolute_error(y_true, y_pred),
-        'R2': r2_score(y_true, y_pred),
-        'MAPE': np.mean(np.abs((y_true - y_pred) / (y_true + 1e-8))) * 100  # Add small value to avoid division by zero
-    }
-    
-    return metrics
-
-def analyze_feature_importance(model, feature_cols, X_test, y_test=None, model_type='lgb'):
-    """Analyze feature importance using SHAP values if available, otherwise use built-in methods"""
-    if SHAP_AVAILABLE and model_type in ['lgb', 'xgb', 'rf', 'gbr', 'ensemble']:
-        try:
-            # Use SHAP for tree-based models
-            explainer = shap.TreeExplainer(model)
-            shap_values = explainer.shap_values(X_test)
-            
-            # Create feature importance DataFrame
-            feature_importance = pd.DataFrame({
-                'feature': feature_cols,
-                'importance': np.abs(shap_values).mean(0)
-            })
-            feature_importance = feature_importance.sort_values('importance', ascending=False)
-            
-            return feature_importance, shap_values
-        except Exception as e:
-            print(f"SHAP analysis failed: {e}. Falling back to built-in feature importance.")
-            # Fall back to built-in methods
-            return get_built_in_feature_importance(model, feature_cols, X_test, y_test, model_type), None
-    else:
-        # Use built-in methods for feature importance
-        return get_built_in_feature_importance(model, feature_cols, X_test, y_test, model_type), None
-
-def get_built_in_feature_importance(model, feature_cols, X_test, y_test, model_type):
-    """Get feature importance using built-in methods of the model"""
-    if model_type in ['lgb', 'xgb', 'rf', 'gbr']:
-        # For tree-based models, use feature_importances_
+    elif method == 'randomforest':
+        # Use Random Forest for feature selection
+        model = RandomForestRegressor(n_estimators=100, random_state=42)
+        model.fit(X, y)
         importances = model.feature_importances_
-    elif model_type == 'ensemble':
-        # For ensemble models, get importance from the first base estimator if available
-        if hasattr(model, 'estimators_'):
-            try:
-                importances = model.estimators_[0].feature_importances_
-            except:
-                # If not available, use permutation importance
-                from sklearn.inspection import permutation_importance
-                result = permutation_importance(model, X_test, y_test, n_repeats=10, random_state=42)
-                importances = result.importances_mean
-        else:
-            # Fallback to equal importance
-            importances = np.ones(len(feature_cols)) / len(feature_cols)
+        
+        # Create feature importance DataFrame
+        feature_importances = pd.DataFrame({
+            'feature': feature_names,
+            'importance': importances
+        }).sort_values('importance', ascending=False)
+        
+        # Select features above threshold
+        selected_features = feature_importances[feature_importances['importance'] > threshold]['feature'].tolist()
+    
+    elif method == 'kbest':
+        # Use SelectKBest with f_regression
+        if k is None:
+            k = min(50, X.shape[1] // 2)  # Default to half of features or 50, whichever is smaller
+            
+        selector = SelectKBest(f_regression, k=k)
+        selector.fit(X, y)
+        importances = selector.scores_
+        
+        # Create feature importance DataFrame
+        feature_importances = pd.DataFrame({
+            'feature': feature_names,
+            'importance': importances
+        }).sort_values('importance', ascending=False)
+        
+        # Get selected feature mask and feature names
+        selected_mask = selector.get_support()
+        selected_features = [feature_names[i] for i in range(len(feature_names)) if selected_mask[i]]
+    
+    elif method == 'rfe':
+        # Use Recursive Feature Elimination
+        if k is None:
+            k = min(50, X.shape[1] // 2)  # Default to half of features or 50, whichever is smaller
+            
+        base_model = RandomForestRegressor(n_estimators=50, random_state=42)
+        selector = RFE(base_model, n_features_to_select=k, step=0.1)
+        selector.fit(X, y)
+        
+        # Get selected feature mask and feature names
+        selected_mask = selector.support_
+        importances = selector.ranking_  # Lower is better
+        
+        # Inverse ranking to get higher values for more important features
+        max_rank = max(importances)
+        importances = max_rank - importances + 1
+        
+        # Create feature importance DataFrame
+        feature_importances = pd.DataFrame({
+            'feature': feature_names,
+            'importance': importances
+        }).sort_values('importance', ascending=False)
+        
+        selected_features = [feature_names[i] for i in range(len(feature_names)) if selected_mask[i]]
+    
     else:
-        # For other models, use permutation importance
-        from sklearn.inspection import permutation_importance
-        result = permutation_importance(model, X_test, y_test, n_repeats=10, random_state=42)
-        importances = result.importances_mean
+        raise ValueError(f"Unknown feature selection method: {method}")
     
-    # Create DataFrame of feature importances
-    feature_importance = pd.DataFrame({
-        'feature': feature_cols,
-        'importance': importances
-    })
-    feature_importance = feature_importance.sort_values('importance', ascending=False)
+    print(f"Selected {len(selected_features)} features out of {len(feature_names)}")
     
-    return feature_importance
+    # Create visualizations if requested
+    if visualize:
+        # Create output directory if it doesn't exist
+        os.makedirs('visualizations/feature_selection', exist_ok=True)
+        
+        # Plot top features
+        plt.figure(figsize=(12, 10))
+        top_features = feature_importances.head(30)
+        sns.barplot(x='importance', y='feature', data=top_features)
+        plt.title(f'Top 30 Features Selected by {method.upper()}')
+        plt.tight_layout()
+        plt.savefig(f'visualizations/feature_selection/{method}_top_features.png')
+        plt.close()
+        
+        # Save full feature importance list to CSV
+        feature_importances.to_csv(f'feature_importance_{method}.csv', index=False)
+    
+    return selected_features, feature_importances
 
-def train_models(X_train, X_test, y_train, y_test, feature_cols, model_types=None):
-    """Train multiple models and return the best one"""
-    if model_types is None:
-        model_types = ['lgb', 'xgb', 'ensemble']
+def apply_smote(X, y, categorical_features=None, sampling_strategy='auto', k_neighbors=5):
+    """
+    Apply SMOTE to handle imbalanced regression data
     
-    results = {}
-    
-    for model_type in model_types:
-        print(f"Training {model_type} model...")
+    Parameters:
+    -----------
+    X : pandas DataFrame
+        Feature matrix
+    y : pandas Series
+        Target variable
+    categorical_features : list or None
+        List of categorical feature indices or names
+    sampling_strategy : float, dict, or str
+        Sampling strategy for SMOTE
+    k_neighbors : int
+        Number of nearest neighbors to use for SMOTE
         
-        if model_type == 'lgb':
-            model, y_pred, params = train_lightgbm_model(X_train, y_train, X_test, y_test, tuning='basic')
-            
-        elif model_type == 'xgb':
-            model, y_pred, params = train_xgboost_model(X_train, y_train, X_test, y_test, tuning='basic')
-            
-        elif model_type == 'nn':
-            model, y_pred = train_neural_network(X_train, y_train, X_test, y_test)
-            params = None
-            
-        elif model_type == 'ensemble':
-            model, y_pred, ensemble_type = create_ensemble_model(X_train, y_train, X_test, y_test)
-            params = {'ensemble_type': ensemble_type}
-            
-        else:
-            continue
-        
-        # Evaluate model
-        metrics = evaluate_model(y_test, y_pred)
-        
-        # Get feature importance
-        feature_importance, shap_values = analyze_feature_importance(
-            model, feature_cols, X_test, y_test, model_type=model_type
-        )
-        
-        # Store results
-        results[model_type] = {
-            'model': model,
-            'predictions': y_pred,
-            'metrics': metrics,
-            'feature_importance': feature_importance,
-            'shap_values': shap_values,
-            'params': params
-        }
-        
-        print(f"{model_type} model metrics:")
-        for metric, value in metrics.items():
-            print(f"  {metric}: {value:.4f}")
+    Returns:
+    --------
+    tuple
+        (X_resampled, y_resampled) as numpy arrays
+    """
+    print("Applying SMOTE for imbalanced regression data...")
     
-    # Find best model based on RMSE
-    best_model_type = min(results, key=lambda x: results[x]['metrics']['RMSE'])
-    print(f"\nBest model: {best_model_type} (RMSE: {results[best_model_type]['metrics']['RMSE']:.4f})")
+    # For regression, create bins to treat as classes
+    # This is a workaround to use SMOTE with regression
+    y_binned = pd.qcut(y, q=5, labels=False, duplicates='drop')
     
-    return results, best_model_type
-
-def save_model(model, feature_cols, scaler, file_path='best_model.pkl'):
-    """Save the trained model and associated metadata"""
-    model_data = {
-        'model': model,
-        'feature_cols': feature_cols,
-        'scaler': scaler
-    }
+    # Convert categorical indices to column indices if needed
+    if categorical_features is not None and isinstance(categorical_features[0], str):
+        cat_indices = [X.columns.get_loc(col) for col in categorical_features if col in X.columns]
+    else:
+        cat_indices = categorical_features
     
-    joblib.dump(model_data, file_path)
-    print(f"Model saved to {file_path}")
-
-def run_advanced_modeling(features_df, perform_feature_selection=True):
-    """Run the advanced modeling pipeline"""
-    # Prepare data
-    X_train, X_test, y_train, y_test, feature_cols, scaler = prepare_model_data(features_df)
-    
-    # Feature selection (if requested)
-    if perform_feature_selection and len(feature_cols) > 20:  # Only do feature selection if we have many features
-        print(f"Performing feature selection (original features: {len(feature_cols)})...")
-        X_train, X_test, selected_features = feature_selection(X_train, y_train, X_test, feature_cols, method='auto')
-        print(f"Selected {len(selected_features)} features")
-        feature_cols = selected_features
-    
-    # Train models
-    results, best_model_type = train_models(
-        X_train, X_test, y_train, y_test, feature_cols,
-        model_types=['lgb', 'xgb', 'ensemble']
+    # Apply SMOTE
+    smote = SMOTE(
+        sampling_strategy=sampling_strategy,
+        k_neighbors=k_neighbors,
+        random_state=42,
+        categorical_features=cat_indices
     )
     
-    # Get best model
-    best_model = results[best_model_type]['model']
-    best_metrics = results[best_model_type]['metrics']
-    best_feature_importance = results[best_model_type]['feature_importance']
+    X_resampled, y_binned_resampled = smote.fit_resample(X, y_binned)
     
-    # Save the best model
-    save_model(best_model, feature_cols, scaler, file_path='best_model.pkl')
+    # Map back to original continuous values
+    # We'll use the mean value of each bin as the synthetic value
+    bin_means = {}
+    for bin_idx in range(len(np.unique(y_binned))):
+        bin_means[bin_idx] = y[y_binned == bin_idx].mean()
     
-    return best_model, best_metrics, best_feature_importance, feature_cols, scaler
+    # Create synthetic continuous target
+    y_resampled = np.array([bin_means[bin_idx] for bin_idx in y_binned_resampled])
+    
+    print(f"Original data shape: {X.shape}, Resampled data shape: {X_resampled.shape}")
+    
+    # Plot distribution before and after SMOTE
+    plt.figure(figsize=(12, 6))
+    
+    plt.subplot(1, 2, 1)
+    sns.histplot(y, kde=True)
+    plt.title('Original Target Distribution')
+    
+    plt.subplot(1, 2, 2)
+    sns.histplot(y_resampled, kde=True)
+    plt.title('SMOTE-Resampled Target Distribution')
+    
+    plt.tight_layout()
+    
+    # Create visualizations directory if it doesn't exist
+    os.makedirs('visualizations/smote', exist_ok=True)
+    plt.savefig('visualizations/smote/smote_distribution_comparison.png')
+    plt.close()
+    
+    return X_resampled, y_resampled
+
+def temporal_cross_validation(X, y, date_index, model, n_splits=5, gap=30, visualize=True):
+    """
+    Perform temporal cross-validation with time series split
+    
+    Parameters:
+    -----------
+    X : pandas DataFrame
+        Feature matrix
+    y : pandas Series
+        Target variable
+    date_index : pandas Series or array
+        Date index for time series split
+    model : estimator object
+        Scikit-learn compatible model with fit and predict methods
+    n_splits : int
+        Number of splits for time series CV
+    gap : int
+        Number of days to use as gap between train and test
+    visualize : bool
+        Whether to create visualization of CV splits
+        
+    Returns:
+    --------
+    dict
+        Cross-validation results with metrics
+    """
+    print(f"Performing temporal cross-validation with {n_splits} splits and {gap} day gap...")
+    
+    # Convert to datetime if not already
+    if not pd.api.types.is_datetime64_any_dtype(date_index):
+        date_index = pd.to_datetime(date_index)
+    
+    # Create TimeSeriesSplit
+    tscv = TimeSeriesSplit(n_splits=n_splits)
+    
+    # Prepare data
+    X_array = X.values if isinstance(X, pd.DataFrame) else X
+    y_array = y.values if isinstance(y, pd.Series) else y
+    date_array = date_index.values if isinstance(date_index, pd.Series) else date_index
+    
+    # Visualization setup
+    if visualize:
+        plt.figure(figsize=(15, 10))
+        
+    # Store results for each fold
+    cv_results = {
+        'rmse': [],
+        'mae': [],
+        'r2': [],
+        'train_size': [],
+        'test_size': [],
+        'train_start': [],
+        'train_end': [],
+        'test_start': [],
+        'test_end': []
+    }
+    
+    # Perform cross-validation
+    for i, (train_idx, test_idx) in enumerate(tscv.split(X_array)):
+        # Add gap between train and test
+        if gap > 0:
+            # Find the latest date in train
+            max_train_date = date_array[train_idx].max()
+            # Add gap days
+            gap_date = max_train_date + np.timedelta64(gap, 'D')
+            # Adjust test indices to start after gap
+            test_idx = np.array([idx for idx in test_idx if date_array[idx] >= gap_date])
+            
+            # If there are no test points left after the gap, skip this fold
+            if len(test_idx) == 0:
+                continue
+        
+        # Split data
+        X_train, X_test = X_array[train_idx], X_array[test_idx]
+        y_train, y_test = y_array[train_idx], y_array[test_idx]
+        
+        # Store fold dates
+        cv_results['train_start'].append(date_array[train_idx].min())
+        cv_results['train_end'].append(date_array[train_idx].max())
+        cv_results['test_start'].append(date_array[test_idx].min())
+        cv_results['test_end'].append(date_array[test_idx].max())
+        cv_results['train_size'].append(len(train_idx))
+        cv_results['test_size'].append(len(test_idx))
+        
+        # Fit model and predict
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        
+        # Calculate metrics
+        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+        mae = mean_absolute_error(y_test, y_pred)
+        r2 = r2_score(y_test, y_pred)
+        
+        # Store metrics
+        cv_results['rmse'].append(rmse)
+        cv_results['mae'].append(mae)
+        cv_results['r2'].append(r2)
+        
+        # Visualize split
+        if visualize:
+            plt.subplot(n_splits, 1, i + 1)
+            
+            # Plot train and test indices
+            plt.scatter(date_array[train_idx], [i + 0.1] * len(train_idx), 
+                     c='blue', marker='o', s=5, label='Train' if i == 0 else "")
+            plt.scatter(date_array[test_idx], [i + 0.2] * len(test_idx), 
+                     c='red', marker='o', s=5, label='Test' if i == 0 else "")
+            
+            # Add metrics text
+            plt.text(date_array.min(), i + 0.3, 
+                  f"Fold {i+1}: RMSE={rmse:.2f}, MAE={mae:.2f}, R²={r2:.2f}", 
+                  fontsize=10)
+            
+            if i == 0:
+                plt.legend(loc='upper right')
+            
+            plt.title(f"Fold {i+1}")
+            if i == n_splits - 1:
+                plt.xlabel('Date')
+    
+    # Save visualization
+    if visualize:
+        plt.suptitle("Temporal Cross-Validation Splits")
+        plt.tight_layout()
+        
+        # Create directory if it doesn't exist
+        os.makedirs('visualizations/cross_validation', exist_ok=True)
+        plt.savefig('visualizations/cross_validation/temporal_cv_splits.png')
+        plt.close()
+        
+        # Create a summary plot of metrics across folds
+        plt.figure(figsize=(15, 6))
+        
+        plt.subplot(1, 3, 1)
+        plt.plot(range(1, len(cv_results['rmse'])+1), cv_results['rmse'], 'o-')
+        plt.title('RMSE by Fold')
+        plt.xlabel('Fold')
+        plt.ylabel('RMSE')
+        
+        plt.subplot(1, 3, 2)
+        plt.plot(range(1, len(cv_results['mae'])+1), cv_results['mae'], 'o-')
+        plt.title('MAE by Fold')
+        plt.xlabel('Fold')
+        plt.ylabel('MAE')
+        
+        plt.subplot(1, 3, 3)
+        plt.plot(range(1, len(cv_results['r2'])+1), cv_results['r2'], 'o-')
+        plt.title('R² by Fold')
+        plt.xlabel('Fold')
+        plt.ylabel('R²')
+        
+        plt.tight_layout()
+        plt.savefig('visualizations/cross_validation/temporal_cv_metrics.png')
+        plt.close()
+    
+    # Calculate average metrics
+    cv_results['avg_rmse'] = np.mean(cv_results['rmse'])
+    cv_results['avg_mae'] = np.mean(cv_results['mae'])
+    cv_results['avg_r2'] = np.mean(cv_results['r2'])
+    
+    print(f"Average CV metrics - RMSE: {cv_results['avg_rmse']:.4f}, MAE: {cv_results['avg_mae']:.4f}, R²: {cv_results['avg_r2']:.4f}")
+    
+    return cv_results
+
+def run_advanced_modeling_pipeline(claims_df, members_df, date_col='ServiceDate', 
+                                 target_col='future_6m_claims', feature_selection_method='xgboost',
+                                 use_smote=True, temporal_cv=True):
+    """
+    Run a complete advanced modeling pipeline with feature selection, SMOTE, and temporal CV
+    
+    Parameters:
+    -----------
+    claims_df : pandas DataFrame
+        The claims dataframe
+    members_df : pandas DataFrame
+        The members dataframe
+    date_col : str
+        Column name containing dates for temporal CV
+    target_col : str
+        Column name containing the target variable
+    feature_selection_method : str
+        Method for feature selection
+    use_smote : bool
+        Whether to apply SMOTE for imbalanced regression
+    temporal_cv : bool
+        Whether to use temporal cross-validation
+        
+    Returns:
+    --------
+    dict
+        Results of the modeling pipeline
+    """
+    print("Starting advanced modeling pipeline...")
+    
+    # Assuming we have a combined features dataframe from previous steps
+    # For this example, we'll create a simple combined dataframe
+    from data_preparation import prepare_data_for_modeling
+    from feature_engineering import prepare_features_for_modeling
+    from enhanced_feature_engineering import enhanced_feature_engineering
+    
+    print("Preparing data...")
+    claims, members = prepare_data_for_modeling()
+    
+    print("Engineering features...")
+    cutoff_date = claims[date_col].max() - timedelta(days=180)
+    features_df = prepare_features_for_modeling(claims, members, cutoff_date)
+    
+    print("Applying advanced feature engineering...")
+    enhanced_features = enhanced_feature_engineering(claims, members)
+    
+    # Combine with the regular features
+    combined_features = pd.merge(features_df, enhanced_features, on='Member_ID', how='left')
+    
+    # Prepare data for modeling
+    X = combined_features.drop([target_col, 'Member_ID', 'PolicyID'], axis=1, errors='ignore')
+    y = combined_features[target_col]
+    
+    # Drop date columns and any other non-numeric columns
+    X = X.select_dtypes(include=['int', 'float'])
+    
+    # Handle NaN values
+    X = X.fillna(0)
+    
+    # Feature selection
+    selected_features, feature_importances = select_features(
+        X, y, 
+        method=feature_selection_method,
+        threshold=0.01,
+        visualize=True
+    )
+    
+    # Use selected features
+    X_selected = X[selected_features]
+    
+    # Apply SMOTE if requested
+    if use_smote:
+        # Identify categorical columns for SMOTE
+        categorical_cols = []  # No categorical columns after one-hot encoding
+        X_resampled, y_resampled = apply_smote(
+            X_selected, y,
+            categorical_features=categorical_cols
+        )
+    else:
+        X_resampled, y_resampled = X_selected.values, y.values
+    
+    # Choose a model
+    model = xgb.XGBRegressor(
+        n_estimators=200,
+        learning_rate=0.05,
+        max_depth=5,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        random_state=42
+    )
+    
+    # Temporal cross-validation if requested
+    if temporal_cv:
+        # Extract dates for each member (using the latest claim date for each member)
+        member_dates = claims.groupby('Member_ID')[date_col].max().reset_index()
+        date_index = pd.Series(index=member_dates['Member_ID'], data=member_dates[date_col])
+        
+        # Match dates with data order
+        date_values = np.array([
+            date_index.get(member_id, pd.Timestamp('2000-01-01')) 
+            for member_id in combined_features['Member_ID']
+        ])
+        
+        # Run temporal CV
+        cv_results = temporal_cross_validation(
+            X_resampled, y_resampled,
+            date_values, model,
+            n_splits=5, gap=30,
+            visualize=True
+        )
+    else:
+        # Train on full dataset if not using CV
+        model.fit(X_resampled, y_resampled)
+        cv_results = None
+    
+    # Train final model on all data
+    final_model = xgb.XGBRegressor(
+        n_estimators=200,
+        learning_rate=0.05,
+        max_depth=5,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        random_state=42
+    )
+    final_model.fit(X_resampled, y_resampled)
+    
+    # Save final model and feature list
+    model_info = {
+        'model': final_model,
+        'selected_features': selected_features,
+        'feature_importances': feature_importances,
+        'cv_results': cv_results
+    }
+    
+    # Save model
+    joblib.dump(model_info, 'advanced_model.pkl')
+    
+    print("Advanced modeling pipeline completed and model saved.")
+    
+    return model_info
+
+if __name__ == "__main__":
+    # Example usage
+    print("Running advanced modeling pipeline...")
+    run_advanced_modeling_pipeline(
+        claims_df=None,  # Will be loaded in the function
+        members_df=None,  # Will be loaded in the function
+        feature_selection_method='xgboost',
+        use_smote=True,
+        temporal_cv=True
+    )

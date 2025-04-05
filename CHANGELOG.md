@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2023-04-06
+
+### Added
+- Enhanced data preparation techniques with KNN imputation and outlier detection
+- Advanced feature engineering with date-based and cyclical features
+- Customer behavior metrics including claim frequency, regularity, and volatility
+- Service distribution analysis with Herfindahl-Hirschman Index
+- Feature selection with multiple methods (XGBoost, Lasso, SelectKBest)
+- SMOTE implementation for imbalanced regression data
+- Temporal cross-validation with proper time gaps
+- Custom focal loss function focusing on hard-to-predict examples
+- Comprehensive error analysis and visualization tools
+- Regression confusion matrix for better model interpretation
+- Error heatmaps to identify challenging regions in feature space
+
+### Changed
+- Improved data preprocessing pipeline with advanced scaling methods
+- Enhanced model training with better handling of temporal data
+- Updated README with documentation on advanced techniques
+- Restructured project for better modularity and readability
+
 ## [1.2.4] - 2023-04-05
 
 ### Fixed

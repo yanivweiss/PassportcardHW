@@ -3,6 +3,29 @@
 ## Project Overview
 This project develops a predictive model for insurance claims at PassportCard. The analysis focuses on predicting the total claim amount per customer for the next six months using historical claims data and member profiles. The solution integrates temporal patterns, risk factors, and demographic information to deliver a robust prediction model with strong business value.
 
+## Advanced Data Science Features
+The project implements several advanced data science techniques to improve prediction accuracy and model robustness:
+
+### Enhanced Data Preparation
+- **Advanced Missing Value Handling**: Using KNN imputation to fill missing values based on similar data points
+- **Outlier Detection and Treatment**: Robust outlier detection using IQR and Z-score methods with visualization
+- **Feature Scaling**: Multiple scaling methods (Standard, Robust, MinMax) tailored to different feature types
+
+### Enhanced Feature Engineering
+- **Date-Based Features**: Extensive date component extraction (day, month, quarter, etc.)
+- **Cyclical Encoding**: Using sine/cosine transformations to properly represent cyclical features
+- **Customer Behavior Features**: Comprehensive metrics including claim frequency, regularity, and volatility
+- **Service Distribution Analysis**: Service concentration metrics using Herfindahl-Hirschman Index
+
+### Advanced Modeling
+- **Feature Selection**: Multiple methods (XGBoost, Lasso, SelectKBest) with visualization of importance
+- **SMOTE for Imbalanced Regression**: Synthetic data generation to balance claim distributions
+- **Temporal Cross-Validation**: Time-based validation with proper gaps between train/test periods
+- **Custom Focal Loss**: Special loss function that focuses more on hard-to-predict claim amounts
+- **Error Analysis**: Comprehensive analysis of prediction errors with regression confusion matrix
+
+These techniques significantly improve model performance, especially for predicting high-value claims and handling temporal patterns in insurance data.
+
 ## Task Objectives & Solutions
 
 ### 1. Data Exploration & Cleaning
@@ -46,6 +69,7 @@ This project develops a predictive model for insurance claims at PassportCard. T
 ### 3. Modeling
 - **Model Selection**:
   - Implemented XGBoost regression model for predicting claim amounts
+  - Applied custom Focal Loss function to focus on hard-to-predict examples
   - Optimized hyperparameters using RandomizedSearchCV
   - Applied robust data preprocessing to handle NaN/infinity values
   - Created safeguards against data leakage in temporal data
@@ -55,6 +79,7 @@ This project develops a predictive model for insurance claims at PassportCard. T
   - Implemented early stopping to prevent overfitting
   - Applied cross-validation for hyperparameter tuning
   - Used feature selection to reduce model complexity
+  - Applied SMOTE to handle imbalanced regression
 
 ### 4. Evaluation
 - **Performance Metrics**:
@@ -67,12 +92,14 @@ This project develops a predictive model for insurance claims at PassportCard. T
   - Time-based validation using a 6-month forward cutoff
   - K-fold cross-validation within the training period
   - Out-of-sample testing on the most recent data
+  - Enhanced validation with time gaps between train/test periods
 
 - **Interpretability**:
   - Feature importance analysis to identify key predictors
   - Visualization of prediction vs. actual values
   - Risk level classification (Low, Medium, High, Very High)
   - Business-friendly visualizations of model insights
+  - Error analysis with regression confusion matrix
 
 ### 5. Business Value
 - **Risk Management**: More accurate assessment of customer risk profiles
@@ -182,18 +209,53 @@ This project develops a predictive model for insurance claims at PassportCard. T
 - This pattern is expected and informs our confidence levels when forecasting reserves
 - For business planning, we recommend using range estimates for high-value claims
 
+### Advanced Analysis
+
+#### Temporal Cross-Validation
+![Temporal CV](visualizations/cross_validation/temporal_cv_splits.png)
+
+**Analysis:** Our temporal cross-validation approach shows:
+- Proper time-based separation between training and test data
+- Consistent performance across different time periods
+- Prevention of data leakage by maintaining chronological order
+- More realistic performance estimation for time-series data
+
+#### Error Analysis Heatmap
+![Error Heatmap](visualizations/error_analysis/error_heatmap_Feature1_Feature2.png)
+
+**Analysis:** This heatmap reveals:
+- Areas of the feature space where prediction errors are highest
+- Interaction effects between key features that affect model performance
+- Specific customer segments that are more difficult to predict
+- Opportunities for model improvement in targeted regions
+
+#### Regression Confusion Matrix
+![Regression Confusion Matrix](visualizations/confusion_matrix/regression_confusion_matrix.png)
+
+**Analysis:** The regression confusion matrix shows:
+- How well the model predicts claim amount categories
+- Where the model tends to overestimate or underestimate
+- The reliability of predictions within different claim value ranges
+- The distribution of prediction errors across claim categories
+
 ## Technical Implementation
 
 ### Project Structure
 - `data_preparation.py`: Data loading and cleaning
+- `enhanced_data_preparation.py`: Advanced handling of missing values and outliers
+- `enhanced_feature_engineering.py`: Generation of date-based and cyclical features
 - `feature_engineering.py`: Basic feature creation
 - `enhanced_features.py`: Advanced feature engineering
 - `advanced_temporal_features.py`: Sophisticated time-based features
 - `enhanced_risk_scores.py`: Comprehensive risk scoring system
+- `advanced_modeling.py`: Feature selection, SMOTE, and temporal CV
+- `focal_loss.py`: Custom loss function for regression
+- `error_analysis.py`: Comprehensive error analysis and visualization
 - `xgboost_modeling.py`: Advanced XGBoost modeling
 - `advanced_business_report.py`: Business analysis and recommendations
 - `test_advanced_features.py` & `test_xgboost_modeling.py`: Unit tests
 - `run_enhanced_modeling.py`: Main execution script
+- `run_enhanced_pipeline.py`: Complete enhanced data science pipeline
 
 ### Key Components
 - **Advanced Temporal Features**: 
@@ -201,6 +263,7 @@ This project develops a predictive model for insurance claims at PassportCard. T
   - Seasonality detection
   - Volatility metrics
   - Trend indicators
+  - Cyclical encoding of temporal features
 
 - **Enhanced Risk Scoring**:
   - Medical-weighted condition scores
@@ -208,11 +271,12 @@ This project develops a predictive model for insurance claims at PassportCard. T
   - Demographic risk factors
   - PCA-based dimension reduction
 
-- **XGBoost Modeling**:
-  - Hyperparameter optimization
-  - Feature importance analysis
-  - Robust preprocessing
-  - Model visualization
+- **Advanced Modeling Techniques**:
+  - Feature selection with multiple methods
+  - SMOTE for imbalanced regression
+  - Temporal cross-validation
+  - Custom focal loss function
+  - Comprehensive error analysis
 
 - **Business Reporting**:
   - Implementation recommendations
@@ -232,22 +296,25 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Run the full analysis:
+3. Run the full enhanced pipeline:
 ```bash
-python run_enhanced_modeling.py
+python run_enhanced_pipeline.py
 ```
 
 4. The results will be saved to:
    - `visualizations/`: Contains all plots and visualizations
    - `reports/advanced_business_report.md`: Contains business recommendations
-   - `integrated_features.csv`: Contains the enhanced feature set
-   - `best_xgboost_model.pkl`: Contains the trained model for deployment
+   - `enhanced_modeling_data.csv`: Contains the enhanced feature set
+   - `best_focal_model.pkl`: Contains the trained focal loss model for deployment
 
-## Latest Improvements (v1.2.1)
-- Fixed data type handling to improve reliability across datasets
-- Enhanced risk score calculation with claims data integration
-- Improved metric calculations for better evaluation accuracy
-- Added more robust error handling throughout the pipeline
+## Latest Improvements (v1.3.0)
+- Added advanced data preparation with KNN imputation and outlier handling
+- Implemented enhanced feature engineering with date-based and cyclical features
+- Added SMOTE for handling imbalanced regression data
+- Implemented temporal cross-validation with time gaps
+- Created custom focal loss function for improved prediction of hard cases
+- Added comprehensive error analysis and visualization tools
+- Created regression confusion matrix for better model interpretation
 
 ## Business Recommendations
 1. **Risk Assessment**:
