@@ -5,189 +5,129 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import joblib
+import sys
+import time
 
 # Import our modules
-from data_preparation import prepare_data_for_modeling
-from enhanced_data_preparation import enhanced_data_preparation
-from enhanced_feature_engineering import enhanced_feature_engineering
-from advanced_modeling import select_features, apply_smote, temporal_cross_validation, run_advanced_modeling_pipeline
-from focal_loss import train_xgboost_with_focal_loss
+from data_preparation import load_data, preprocess_data
+from feature_engineering import create_basic_features
+from enhanced_features import create_enhanced_features, create_temporal_features
+from advanced_modeling import select_features, train_test_temporal_split
 from error_analysis import analyze_prediction_errors, create_regression_confusion_matrix, plot_error_heatmap
+from run_enhanced_modeling import run_advanced_modeling_pipeline
 
 def run_full_enhanced_pipeline():
     """
     Run the complete enhanced data science pipeline
     """
-    print("\n" + "="*80)
-    print("RUNNING ENHANCED DATA SCIENCE PIPELINE")
-    print("="*80 + "\n")
+    print("Starting enhanced data science pipeline...")
+    start_time = time.time()
     
-    # Step 1: Load and prepare data
-    print("\n--- Step 1: Data Preparation ---\n")
-    claims_df, members_df = prepare_data_for_modeling()
+    # Step 1: Load and preprocess data
+    print("\n--- Step 1: Data Loading and Preprocessing ---\n")
+    claims_df, members_df = load_data()
+    claims_df, members_df = preprocess_data(claims_df, members_df)
     
-    # Step 2: Enhanced data preparation
-    print("\n--- Step 2: Enhanced Data Preparation ---\n")
-    cleaned_claims, scaler_claims, outlier_info_claims = enhanced_data_preparation(
-        claims_df, 
-        missing_strategy='knn',
-        outlier_method='iqr',
-        scaling_method='robust'
-    )
+    # Step 2: Create basic features
+    print("\n--- Step 2: Creating Basic Features ---\n")
+    basic_features = create_basic_features(claims_df, members_df)
     
-    cleaned_members, scaler_members, outlier_info_members = enhanced_data_preparation(
-        members_df, 
-        missing_strategy='knn',
-        outlier_method='iqr',
-        scaling_method='robust'
-    )
+    # Step 3: Create enhanced features
+    print("\n--- Step 3: Creating Enhanced Features ---\n")
+    enhanced_features = create_enhanced_features(claims_df, members_df)
     
-    # Step 3: Enhanced feature engineering
-    print("\n--- Step 3: Enhanced Feature Engineering ---\n")
-    date_columns = ['ServiceDate', 'PolicyStartDate', 'PolicyEndDate', 'DateOfBirth']
-    enhanced_features_df = enhanced_feature_engineering(
-        cleaned_claims, 
-        cleaned_members, 
-        date_columns=date_columns
-    )
+    # Step 4: Create temporal features
+    print("\n--- Step 4: Creating Temporal Features ---\n")
+    temporal_features = create_temporal_features(claims_df, members_df)
     
-    # Step 4: Define cutoff date for training/testing
-    cutoff_date = claims_df['ServiceDate'].max() - timedelta(days=180)
-    print(f"\nUsing cutoff date: {cutoff_date} for training/testing split")
+    # Merge all features
+    all_features = pd.merge(basic_features, enhanced_features, on='Member_ID', how='outer')
+    all_features = pd.merge(all_features, temporal_features, on='Member_ID', how='outer')
     
-    # Step 5: Split data for modeling
-    print("\n--- Step 4: Prepare Data for Modeling ---\n")
+    # Fill NaN values created during merging
+    all_features = all_features.fillna(0)
     
-    # Filter claims data to include only data before cutoff date
-    training_claims = claims_df[claims_df['ServiceDate'] <= cutoff_date]
+    # Step 5: Prepare target variable
+    print("\n--- Step 5: Preparing Target Variable ---\n")
+    # Target is already in the features DataFrame as 'future_6m_claims'
+    target_col = 'future_6m_claims'
+    if target_col not in all_features.columns:
+        print(f"Error: Target column '{target_col}' not found in features")
+        sys.exit(1)
     
-    # Create the target variable: sum of claims in the 6 months after cutoff date
-    test_claims = claims_df[
-        (claims_df['ServiceDate'] > cutoff_date) & 
-        (claims_df['ServiceDate'] <= cutoff_date + timedelta(days=180))
-    ]
-    
-    # Group by member and sum claim amounts
-    future_claims = test_claims.groupby('Member_ID')['TotPaymentUSD'].sum().reset_index()
-    future_claims.columns = ['Member_ID', 'future_6m_claims']
-    
-    # Merge target with features
-    modeling_data = pd.merge(
-        enhanced_features_df, 
-        future_claims, 
-        on='Member_ID', 
-        how='left'
-    )
-    
-    # Fill missing target values with 0 (assuming no claims)
-    modeling_data['future_6m_claims'].fillna(0, inplace=True)
-    
-    # Save the prepared data
-    modeling_data.to_csv('enhanced_modeling_data.csv', index=False)
-    print(f"Saved prepared data with {modeling_data.shape[1]} features for {modeling_data.shape[0]} members")
+    X = all_features.drop(columns=[target_col, 'Member_ID'])
+    y = all_features[target_col]
     
     # Step 6: Feature selection
-    print("\n--- Step 5: Feature Selection ---\n")
-    X = modeling_data.drop(['Member_ID', 'future_6m_claims'], axis=1, errors='ignore')
-    y = modeling_data['future_6m_claims']
+    print("\n--- Step 6: Feature Selection ---\n")
+    selected_features = select_features(X, y, method='xgboost', k=30)  # Select top 30 features
+    X_selected = X[selected_features].copy()
     
-    # Keep only numeric columns
-    X = X.select_dtypes(include=['int', 'float'])
+    # Save feature names for later
+    final_features = selected_features
     
-    # Fill any remaining NaN values
-    X = X.fillna(0)
+    # Save to CSV for analysis
+    feature_importance_df = pd.DataFrame({
+        'feature': X_selected.columns,
+        'importance': [1] * len(X_selected.columns)  # Placeholder, will be updated after model training
+    })
+    feature_importance_df.to_csv('selected_features.csv', index=False)
+    print(f"Selected {len(selected_features)} features")
     
-    # Select features using multiple methods
-    feature_selection_methods = ['xgboost', 'lasso', 'kbest']
-    selected_features = {}
-    
-    for method in feature_selection_methods:
-        print(f"\nSelecting features using {method} method...")
-        selected_features[method], feature_importances = select_features(
-            X, y, method=method, threshold=0.01, k=50, visualize=True
-        )
-        print(f"Selected {len(selected_features[method])} features using {method}")
-    
-    # Find common features across methods (more robust selection)
-    common_features = list(set.intersection(*map(set, selected_features.values())))
-    print(f"\nFound {len(common_features)} common features across all methods")
-    
-    # Use XGBoost selected features for further modeling
-    final_features = selected_features['xgboost']
-    X_selected = X[final_features]
-    
-    # Step 7: Apply SMOTE for imbalanced regression
-    print("\n--- Step 6: Apply SMOTE for Imbalanced Regression ---\n")
-    X_resampled, y_resampled = apply_smote(
-        X_selected, y,
-        categorical_features=None,
-        sampling_strategy='auto',
-        k_neighbors=5
+    # Step 7: Train-test split with temporal validation
+    print("\n--- Step 7: Temporal Train-Test Split ---\n")
+    X_train, X_test, y_train, y_test = train_test_temporal_split(
+        X_selected, y, test_size=0.2, random_state=42
     )
     
-    # Step 8: Temporal cross-validation
-    print("\n--- Step 7: Temporal Cross-Validation ---\n")
+    # Step 8: XGBoost modeling with temporal validation
+    print("\n--- Step 8: XGBoost Modeling ---\n")
+    import xgboost as xgb
+    from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
     
-    # Get dates for members (latest claim date)
-    member_dates = claims_df.groupby('Member_ID')['ServiceDate'].max().reset_index()
-    member_dates = pd.Series(
-        member_dates['ServiceDate'].values,
-        index=member_dates['Member_ID']
-    )
-    
-    # Match dates with our data order
-    dates = modeling_data['Member_ID'].map(member_dates).fillna(pd.Timestamp('2000-01-01'))
-    
-    # Create a basic model for CV
-    from xgboost import XGBRegressor
-    base_model = XGBRegressor(
-        n_estimators=100,
+    xgb_model = xgb.XGBRegressor(
+        n_estimators=200,
         learning_rate=0.05,
-        max_depth=5,
+        max_depth=6,
         subsample=0.8,
         colsample_bytree=0.8,
         random_state=42
     )
     
-    # Run temporal CV
-    cv_results = temporal_cross_validation(
-        X_selected, y,
-        dates.values,
-        base_model,
-        n_splits=5,
-        gap=30,
-        visualize=True
-    )
+    # Train the model
+    xgb_model.fit(X_train, y_train, 
+                 eval_set=[(X_train, y_train), (X_test, y_test)],
+                 eval_metric='rmse',
+                 early_stopping_rounds=20,
+                 verbose=True)
     
-    # Step 9: Train with focal loss
-    print("\n--- Step 8: Train with Focal Loss ---\n")
+    # Get predictions
+    predictions = xgb_model.predict(X_test)
     
-    # Split data for focal loss training
-    from sklearn.model_selection import train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_selected, y, test_size=0.2, random_state=42
-    )
+    # Calculate metrics
+    metrics = {
+        'RMSE': np.sqrt(mean_squared_error(y_test, predictions)),
+        'MAE': mean_absolute_error(y_test, predictions),
+        'R2': r2_score(y_test, predictions)
+    }
     
-    # Train with focal loss
-    focal_model, focal_predictions, focal_metrics = train_xgboost_with_focal_loss(
-        X_train, y_train, X_test, y_test,
-        gamma=2.0,  # Focusing parameter
-        alpha=0.25  # More weight to under-predictions
-    )
+    print("\nModel Performance:")
+    for metric, value in metrics.items():
+        print(f"  {metric}: {value:.4f}")
     
-    # Step 10: Error analysis and confusion matrix
+    # Step 9: Error analysis and confusion matrix
     print("\n--- Step 9: Error Analysis and Confusion Matrix ---\n")
     
     # Analyze prediction errors
     error_results = analyze_prediction_errors(
-        y_test, focal_predictions,
+        y_test, predictions,
         feature_matrix=X_test,
         feature_names=X_test.columns
     )
     
     # Create regression confusion matrix
     cm, bin_edges = create_regression_confusion_matrix(
-        y_test, focal_predictions,
+        y_test, predictions,
         n_classes=5,
         visualize=True
     )
@@ -195,26 +135,25 @@ def run_full_enhanced_pipeline():
     # Create error heatmap for top features
     top_features = X_selected.columns[:2]  # Use top 2 features
     plot_error_heatmap(
-        y_test, focal_predictions,
+        y_test, predictions,
         X_test[top_features[0]], X_test[top_features[1]],
         top_features[0], top_features[1]
     )
     
-    # Step 11: Save final model
+    # Step 10: Save final model
     print("\n--- Step 10: Save Final Models and Results ---\n")
     
-    # Save the focal loss model
-    focal_model_info = {
-        'model': focal_model,
+    # Save the model
+    model_info = {
+        'model': xgb_model,
         'features': final_features,
-        'metrics': focal_metrics,
+        'metrics': metrics,
         'bin_edges': bin_edges,
-        'cv_results': cv_results,
         'error_analysis': error_results
     }
     
-    joblib.dump(focal_model_info, 'best_focal_model.pkl')
-    print("Saved focal loss model to best_focal_model.pkl")
+    joblib.dump(model_info, 'best_xgboost_model.pkl')
+    print("Saved model to best_xgboost_model.pkl")
     
     # Run the standard advanced pipeline too for comparison
     print("\n--- Step 11: Run Standard Advanced Pipeline for Comparison ---\n")
@@ -228,12 +167,12 @@ def run_full_enhanced_pipeline():
     
     # Compare results
     print("\n--- Final Results Comparison ---\n")
-    print("Focal Loss Model Metrics:")
-    for metric, value in focal_metrics.items():
+    print("XGBoost Model Metrics:")
+    for metric, value in metrics.items():
         print(f"  {metric}: {value:.4f}")
     
     print("\nStandard Model CV Metrics:")
-    if advanced_results['cv_results'] is not None:
+    if 'cv_results' in advanced_results and advanced_results['cv_results'] is not None:
         for metric in ['avg_rmse', 'avg_mae', 'avg_r2']:
             print(f"  {metric.upper()}: {advanced_results['cv_results'][metric]:.4f}")
     

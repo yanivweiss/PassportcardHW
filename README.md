@@ -21,7 +21,6 @@ The project implements several advanced data science techniques to improve predi
 - **Feature Selection**: Multiple methods (XGBoost, Lasso, SelectKBest) with visualization of importance
 - **SMOTE for Imbalanced Regression**: Synthetic data generation to balance claim distributions
 - **Temporal Cross-Validation**: Time-based validation with proper gaps between train/test periods
-- **Custom Focal Loss**: Special loss function that focuses more on hard-to-predict claim amounts
 - **Error Analysis**: Comprehensive analysis of prediction errors with regression confusion matrix
 
 These techniques significantly improve model performance, especially for predicting high-value claims and handling temporal patterns in insurance data.
@@ -69,7 +68,6 @@ These techniques significantly improve model performance, especially for predict
 ### 3. Modeling
 - **Model Selection**:
   - Implemented XGBoost regression model for predicting claim amounts
-  - Applied custom Focal Loss function to focus on hard-to-predict examples
   - Optimized hyperparameters using RandomizedSearchCV
   - Applied robust data preprocessing to handle NaN/infinity values
   - Created safeguards against data leakage in temporal data
@@ -249,7 +247,6 @@ These techniques significantly improve model performance, especially for predict
 - `advanced_temporal_features.py`: Sophisticated time-based features
 - `enhanced_risk_scores.py`: Comprehensive risk scoring system
 - `advanced_modeling.py`: Feature selection, SMOTE, and temporal CV
-- `focal_loss.py`: Custom loss function for regression
 - `error_analysis.py`: Comprehensive error analysis and visualization
 - `xgboost_modeling.py`: Advanced XGBoost modeling
 - `advanced_business_report.py`: Business analysis and recommendations
@@ -275,7 +272,6 @@ These techniques significantly improve model performance, especially for predict
   - Feature selection with multiple methods
   - SMOTE for imbalanced regression
   - Temporal cross-validation
-  - Custom focal loss function
   - Comprehensive error analysis
 
 - **Business Reporting**:
@@ -312,8 +308,7 @@ python run_enhanced_pipeline.py
 - Implemented enhanced feature engineering with date-based and cyclical features
 - Added SMOTE for handling imbalanced regression data
 - Implemented temporal cross-validation with time gaps
-- Created custom focal loss function for improved prediction of hard cases
-- Added comprehensive error analysis and visualization tools
+- Created comprehensive error analysis and visualization tools
 - Created regression confusion matrix for better model interpretation
 
 ## Business Recommendations

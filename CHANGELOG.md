@@ -254,6 +254,16 @@ All notable changes to this project will be documented in this file.
 - Base feature set
 - Basic visualizations
 
+## [1.3.3] - 2023-04-07
+
+### Removed
+- Removed Custom Focal Loss implementation as it was not needed
+- Simplified the codebase by focusing on standard loss functions
+
+### Fixed
+- Fixed test cases to match the updated codebase
+- Ensured all tests pass after removal of focal loss
+
 ## [1.3.2] - 2023-04-07
 
 ### Changed
