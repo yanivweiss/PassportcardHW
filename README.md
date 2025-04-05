@@ -132,18 +132,6 @@ Key findings:
 - Temporal validation shows consistent performance across different time periods
 - Error analysis reveals higher prediction accuracy for moderate claim amounts ($100-$1000)
 
-![Claims Distribution](outputs/figures/claims_distribution.png)
-
-This histogram illustrates the distribution of claim amounts (TotPaymentUSD). The distribution is heavily right-skewed, with a mean of $312.45 and a median of $175.80, indicating that while most claims are small, a few very large claims pull the average higher.
-
-![Temporal Claims Patterns](outputs/figures/claims_over_time.png)
-
-This time series plot shows claim frequency by month with clear seasonality: higher claim volumes during winter months (Dec-Feb), secondary peaks during mid-summer (Jul-Aug), and lowest claim volumes in spring and fall.
-
-![Feature Importance](outputs/figures/feature_importance.png)
-
-This chart displays the relative importance of features in our model, highlighting how claim frequency and chronic condition scores drive predictions.
-
 ## Conclusions and Insights
 
 ### Key Insights
