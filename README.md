@@ -19,7 +19,6 @@ The project implements several advanced data science techniques to improve predi
 
 ### Advanced Modeling
 - **Feature Selection**: Multiple methods (XGBoost, Lasso, SelectKBest) with visualization of importance
-- **SMOTE for Imbalanced Regression**: Synthetic data generation to balance claim distributions
 - **Temporal Cross-Validation**: Time-based validation with proper gaps between train/test periods
 - **Error Analysis**: Comprehensive analysis of prediction errors with regression confusion matrix
 
