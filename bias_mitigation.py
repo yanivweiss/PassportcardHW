@@ -63,16 +63,21 @@ def calculate_group_statistics(X, y, group_col):
         'target_max': [y.max()]
     })
     
-    # Combine group and overall statistics
-    stats = pd.concat([stats, overall], ignore_index=True)
-    
-    # Calculate proportion of samples in each group
+    # Calculate proportion of samples in each group (excluding 'overall')
     stats['proportion'] = stats['target_count'] / len(y)
     
     # Calculate relative mean (compared to overall)
-    stats['relative_mean'] = stats['target_mean'] / stats.loc[stats['group'] == 'overall', 'target_mean'].values[0]
+    overall_mean = y.mean()
+    stats['relative_mean'] = stats['target_mean'] / overall_mean
     
-    return stats
+    # Combine group and overall statistics
+    combined_stats = pd.concat([stats, overall], ignore_index=True)
+    
+    # Set proportion for 'overall' to 1.0
+    combined_stats.loc[combined_stats['group'] == 'overall', 'proportion'] = 1.0
+    combined_stats.loc[combined_stats['group'] == 'overall', 'relative_mean'] = 1.0
+    
+    return combined_stats
 
 def create_sample_weights(X, y, group_col, method='balanced'):
     """
@@ -179,13 +184,13 @@ def train_weighted_model(X_train, y_train, X_test, y_test, group_col,
     # Calculate sample weights
     sample_weights = create_sample_weights(X_train, y_train, group_col, method=weighting_method)
     
-    # Create a copy of training data
-    X_train_model = X_train.copy()
-    X_test_model = X_test.copy()
+    # Get group information for later evaluation
+    group_train = X_train[group_col].values
+    group_test = X_test[group_col].values
     
-    # Remove the group column if we don't want the model to use it explicitly
-    group_train = X_train[group_col]
-    group_test = X_test[group_col]
+    # Create a copy of training data without the group column
+    X_train_model = X_train.drop(columns=[group_col]).copy()
+    X_test_model = X_test.drop(columns=[group_col]).copy()
     
     # Train a model with sample weights
     if model_type == 'xgboost':
@@ -453,16 +458,16 @@ def adversarial_debiasing(X_train, y_train, X_test, y_test, group_col,
 
 def post_processing_calibration(model, X_test, y_test, group_col):
     """
-    Perform post-processing calibration to equalize error rates across groups.
+    Apply post-processing calibration to equalize error rates across groups.
     
     Parameters:
     -----------
     model : estimator
         Trained model with predict method
     X_test : pandas DataFrame
-        Testing feature matrix
+        Test feature matrix
     y_test : array-like
-        Testing target values
+        Test target values
     group_col : str
         Column name for group membership
         
@@ -474,92 +479,153 @@ def post_processing_calibration(model, X_test, y_test, group_col):
     # Create output directory for visualizations
     os.makedirs('visualizations/bias_mitigation', exist_ok=True)
     
-    # Extract group information
-    groups = X_test[group_col].values
-    unique_groups = np.unique(groups)
+    # Get group information
+    group_test = X_test[group_col].values
+    unique_groups = np.unique(group_test)
     
-    # Generate predictions
-    y_pred = model.predict(X_test)
+    # Create a copy of test data without the group column for prediction
+    X_test_model = X_test.drop(columns=[group_col]).copy()
+    
+    # Get uncalibrated predictions
+    y_pred = model.predict(X_test_model)
     
     # Calculate error statistics for each group
-    group_errors = {}
+    error_stats = {}
     for group in unique_groups:
-        group_mask = (groups == group)
-        
-        if sum(group_mask) > 0:  # Ensure we have samples for this group
-            group_y_true = y_test[group_mask]
-            group_y_pred = y_pred[group_mask]
+        group_mask = (group_test == group)
+        if sum(group_mask) > 0:
+            y_test_group = y_test[group_mask]
+            y_pred_group = y_pred[group_mask]
             
-            # Calculate error statistics
-            errors = group_y_pred - group_y_true
-            group_errors[group] = {
-                'mean_error': errors.mean(),
-                'error_std': errors.std(),
-                'rmse_before': np.sqrt(mean_squared_error(group_y_true, group_y_pred))
+            # Calculate mean error
+            error_mean = np.mean(y_pred_group - y_test_group)
+            
+            # Calculate error standard deviation
+            error_std = np.std(y_pred_group - y_test_group)
+            
+            error_stats[group] = {
+                'mean': error_mean,
+                'std': error_std,
+                'samples': sum(group_mask)
             }
     
-    # Calculate calibration parameters
+    # Calculate overall error statistics
+    overall_error_mean = np.mean(y_pred - y_test)
+    overall_error_std = np.std(y_pred - y_test)
+    
+    # Calculate calibration parameters for each group
     calibration_params = {}
-    for group in unique_groups:
-        # Bias correction - subtract the average error
-        calibration_params[group] = {
-            'bias_correction': -group_errors[group]['mean_error']
-        }
+    for group, stats in error_stats.items():
+        # We'll calibrate by subtracting the group-specific mean error
+        # to bring each group's mean error close to the overall mean error
+        calibration = stats['mean'] - overall_error_mean
+        calibration_params[group] = calibration
     
-    # Apply calibration to get adjusted predictions
-    y_pred_calibrated = np.copy(y_pred)
-    for group in unique_groups:
-        group_mask = (groups == group)
-        bias_correction = calibration_params[group]['bias_correction']
-        y_pred_calibrated[group_mask] += bias_correction
+    # Apply calibration and calculate metrics
+    calibrated_metrics = {}
+    uncalibrated_metrics = {}
     
-    # Calculate performance after calibration
     for group in unique_groups:
-        group_mask = (groups == group)
-        
+        group_mask = (group_test == group)
         if sum(group_mask) > 0:
-            group_y_true = y_test[group_mask]
-            group_y_pred_calibrated = y_pred_calibrated[group_mask]
+            y_test_group = y_test[group_mask]
+            y_pred_group = y_pred[group_mask]
             
-            group_errors[group]['rmse_after'] = np.sqrt(mean_squared_error(
-                group_y_true, group_y_pred_calibrated
-            ))
+            # Calculate uncalibrated metrics
+            uncalibrated_metrics[group] = {
+                'rmse': np.sqrt(mean_squared_error(y_test_group, y_pred_group)),
+                'mae': mean_absolute_error(y_test_group, y_pred_group),
+                'bias': np.mean(y_pred_group - y_test_group)
+            }
+            
+            # Apply calibration
+            y_pred_calibrated = y_pred_group - calibration_params[group]
+            
+            # Calculate calibrated metrics
+            calibrated_metrics[group] = {
+                'rmse': np.sqrt(mean_squared_error(y_test_group, y_pred_calibrated)),
+                'mae': mean_absolute_error(y_test_group, y_pred_calibrated),
+                'bias': np.mean(y_pred_calibrated - y_test_group)
+            }
     
-    # Visualize the effect of calibration
-    plt.figure(figsize=(12, 6))
+    # Overall metrics
+    uncalibrated_metrics['overall'] = {
+        'rmse': np.sqrt(mean_squared_error(y_test, y_pred)),
+        'mae': mean_absolute_error(y_test, y_pred),
+        'bias': np.mean(y_pred - y_test)
+    }
     
-    # Plot RMSE before and after calibration
-    plt.subplot(1, 2, 1)
-    groups_list = list(group_errors.keys())
-    rmse_before = [group_errors[g]['rmse_before'] for g in groups_list]
-    rmse_after = [group_errors[g]['rmse_after'] for g in groups_list]
+    # Apply calibration to get overall metrics
+    y_pred_calibrated = np.zeros_like(y_pred)
+    for group in unique_groups:
+        group_mask = (group_test == group)
+        y_pred_calibrated[group_mask] = y_pred[group_mask] - calibration_params[group]
     
-    x = np.arange(len(groups_list))
+    calibrated_metrics['overall'] = {
+        'rmse': np.sqrt(mean_squared_error(y_test, y_pred_calibrated)),
+        'mae': mean_absolute_error(y_test, y_pred_calibrated),
+        'bias': np.mean(y_pred_calibrated - y_test)
+    }
+    
+    # Visualize calibration results
+    plt.figure(figsize=(15, 5))
+    
+    # Plot bias (before and after)
+    plt.subplot(1, 3, 1)
+    groups = list(uncalibrated_metrics.keys())
+    uncalibrated_bias = [uncalibrated_metrics[g]['bias'] for g in groups]
+    calibrated_bias = [calibrated_metrics[g]['bias'] for g in groups]
+    
+    x = np.arange(len(groups))
     width = 0.35
     
-    plt.bar(x - width/2, rmse_before, width, label='Before Calibration')
-    plt.bar(x + width/2, rmse_after, width, label='After Calibration')
+    plt.bar(x - width/2, uncalibrated_bias, width, label='Uncalibrated')
+    plt.bar(x + width/2, calibrated_bias, width, label='Calibrated')
+    
+    plt.axhline(y=0, linestyle='--', color='r')
+    plt.xlabel('Group')
+    plt.ylabel('Bias (Mean Error)')
+    plt.title('Bias Before and After Calibration')
+    plt.xticks(x, groups)
+    plt.legend()
+    
+    # Plot RMSE (before and after)
+    plt.subplot(1, 3, 2)
+    uncalibrated_rmse = [uncalibrated_metrics[g]['rmse'] for g in groups]
+    calibrated_rmse = [calibrated_metrics[g]['rmse'] for g in groups]
+    
+    plt.bar(x - width/2, uncalibrated_rmse, width, label='Uncalibrated')
+    plt.bar(x + width/2, calibrated_rmse, width, label='Calibrated')
     
     plt.xlabel('Group')
     plt.ylabel('RMSE')
     plt.title('RMSE Before and After Calibration')
-    plt.xticks(x, groups_list)
+    plt.xticks(x, groups)
     plt.legend()
     
-    # Plot bias correction values
-    plt.subplot(1, 2, 2)
-    bias_corrections = [calibration_params[g]['bias_correction'] for g in groups_list]
+    # Plot MAE (before and after)
+    plt.subplot(1, 3, 3)
+    uncalibrated_mae = [uncalibrated_metrics[g]['mae'] for g in groups]
+    calibrated_mae = [calibrated_metrics[g]['mae'] for g in groups]
     
-    plt.bar(groups_list, bias_corrections)
+    plt.bar(x - width/2, uncalibrated_mae, width, label='Uncalibrated')
+    plt.bar(x + width/2, calibrated_mae, width, label='Calibrated')
+    
     plt.xlabel('Group')
-    plt.ylabel('Bias Correction Value')
-    plt.title('Calibration Adjustments by Group')
+    plt.ylabel('MAE')
+    plt.title('MAE Before and After Calibration')
+    plt.xticks(x, groups)
+    plt.legend()
     
     plt.tight_layout()
     plt.savefig('visualizations/bias_mitigation/post_processing_calibration.png')
     plt.close()
     
-    return calibration_params
+    return {
+        'calibration_params': calibration_params,
+        'uncalibrated_metrics': uncalibrated_metrics,
+        'calibrated_metrics': calibrated_metrics
+    }
 
 def fairness_constrained_optimization(X_train, y_train, X_test, y_test, group_col, fairness_constraint=0.1):
     """

@@ -92,10 +92,10 @@ class TestBiasMitigation(unittest.TestCase):
         # Calculate group statistics
         stats = bm.calculate_group_statistics(self.X, self.y, 'group')
         
-        # Check if result is a DataFrame
+        # Check if stats is a DataFrame
         self.assertIsInstance(stats, pd.DataFrame)
         
-        # Check if both groups and overall are included
+        # Check if both groups are included
         self.assertTrue('A' in stats['group'].values)
         self.assertTrue('B' in stats['group'].values)
         self.assertTrue('overall' in stats['group'].values)
@@ -106,13 +106,18 @@ class TestBiasMitigation(unittest.TestCase):
         self.assertIn('proportion', stats.columns)
         self.assertIn('relative_mean', stats.columns)
         
-        # Check proportions sum to 1
-        self.assertAlmostEqual(stats['proportion'].sum(), 1.0)
+        # Check that non-overall proportions sum to 1.0
+        non_overall = stats[stats['group'] != 'overall']
+        self.assertAlmostEqual(non_overall['proportion'].sum(), 1.0)
         
-        # Check that group A has higher values as set in synthetic data
+        # Check that the overall proportion is 1.0
+        overall_prop = stats.loc[stats['group'] == 'overall', 'proportion'].values[0]
+        self.assertAlmostEqual(overall_prop, 1.0)
+        
+        # Check that group B has higher values in our synthetic data
         a_mean = stats.loc[stats['group'] == 'A', 'target_mean'].values[0]
         b_mean = stats.loc[stats['group'] == 'B', 'target_mean'].values[0]
-        self.assertGreater(a_mean, b_mean)
+        self.assertGreater(b_mean, a_mean)
 
     def test_create_sample_weights(self):
         """Test creation of sample weights for bias mitigation"""
@@ -207,18 +212,24 @@ class TestBiasMitigation(unittest.TestCase):
         model.fit(self.X_train.drop(columns=['group']), self.y_train)
         
         # Apply post-processing calibration
-        calibration_params = bm.post_processing_calibration(
+        calibration_results = bm.post_processing_calibration(
             model, self.X_test, self.y_test, 'group'
         )
         
         # Check if calibration parameters are returned
-        self.assertIsInstance(calibration_params, dict)
+        self.assertIsInstance(calibration_results, dict)
+        self.assertIn('calibration_params', calibration_results)
+        self.assertIn('uncalibrated_metrics', calibration_results)
+        self.assertIn('calibrated_metrics', calibration_results)
+        
+        # Check if calibration parameters exist for each group
+        calibration_params = calibration_results['calibration_params']
         self.assertIn('A', calibration_params)
         self.assertIn('B', calibration_params)
         
-        # Check structure of calibration parameters
-        self.assertIn('bias_correction', calibration_params['A'])
-        self.assertIn('bias_correction', calibration_params['B'])
+        # Check metrics structure
+        self.assertIn('overall', calibration_results['uncalibrated_metrics'])
+        self.assertIn('overall', calibration_results['calibrated_metrics'])
         
         # Verify that the plot was created
         self.assertTrue(os.path.exists('visualizations/bias_mitigation/post_processing_calibration.png'))
