@@ -1,6 +1,93 @@
-# PassportCard Insurance Claims Prediction
+# PassportCard Data Science Assignment
 
-This project develops a machine learning system to predict future insurance claims for PassportCard policyholders.
+This repository contains a data science assignment for PassportCard insurance company, focused on predicting insurance claims.
+
+## Quick Start
+
+### Running with the Fix Scripts
+
+If you encounter issues with either model training or Jupyter startup, use the fix scripts:
+
+1. **Fix all issues at once:**
+   ```
+   python passportcard_fix_all.py
+   ```
+
+2. **Run Jupyter with the fixed launcher:**
+   ```
+   python launch_jupyter.py
+   ```
+
+### Notebooks
+
+The project consists of three Jupyter notebooks that should be run in sequence:
+
+1. **1_PassportCard_Insurance_Claims_Prediction.ipynb**
+   - Data cleaning and exploratory data analysis
+
+2. **2_PassportCard_Model_Development.ipynb**  
+   - Feature engineering and model development
+   - *Note: If you encounter date conversion errors during model training, use the fix scripts*
+
+3. **3_PassportCard_Business_Applications.ipynb**
+   - Business insights and model applications
+
+## Common Issues & Solutions
+
+### Issue 1: Date Conversion Error in Model Training
+If you see error `TypeError: Cannot convert non-finite values (NA or inf) to integer` when training models:
+
+- Use our fix script: `python fix_manual.py`
+- Or manually edit the notebook to filter out date/object columns before model training
+
+### Issue 2: Jupyter Notebook.app Module Error
+If you see error `ModuleNotFoundError: No module named 'notebook.app'` when starting Jupyter:
+
+- Use our fix script: `python fix_jupyter.py`
+- Or launch Jupyter with our patched launcher: `python launch_jupyter.py`
+
+## Project Structure
+
+- `/notebooks/`: Jupyter notebooks for the analysis
+- `/data/`: Input data files
+- Fix scripts:
+  - `passportcard_fix_all.py`: Comprehensive fix for all issues
+  - `fix_manual.py`: Fixes the model training issue
+  - `fix_jupyter.py`: Fixes the Jupyter notebook.app issue
+  - `launch_jupyter.py`: Reliable Jupyter launcher
+
+## Requirements
+
+- Python 3.8+
+- Required packages:
+  - pandas
+  - numpy
+  - matplotlib
+  - seaborn
+  - scikit-learn
+  - jupyter
+  - nbclassic (if using notebook interface)
+
+## Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yanivweiss/PassportcardHW.git
+cd PassportcardHW
+
+# Create and activate virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the fix script to ensure everything works
+python passportcard_fix_all.py
+
+# Launch Jupyter
+python launch_jupyter.py
+```
 
 ## Project Overview
 

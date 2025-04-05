@@ -240,3 +240,20 @@ All notable changes to this project will be documented in this file.
 - XGBoost regression model
 - Basic evaluation metrics
 - Visualization of model performance
+
+## Bug Fixes - April 6, 2025
+
+### Issue: Model Training Error
+- Fixed error when converting date columns to numeric values in model training
+- Added explicit filtering of non-numeric columns in the prepare_for_modeling function
+- Added a safety check in the evaluate_model function to ensure only numeric data is passed to models
+
+### Issue: Jupyter Notebook.app Module Error
+- Fixed "ModuleNotFoundError: No module named 'notebook.app'" when running Jupyter Notebook
+- Created the missing package structure in site-packages
+- Added reliable Jupyter launcher script (launch_jupyter.py) with multiple fallback options
+
+### Additional Improvements
+- Added comprehensive fix script (passportcard_fix_all.py) to address both issues at once
+- Created more detailed documentation in the README
+- Applied fixes with minimal changes to preserve the original notebook structure
