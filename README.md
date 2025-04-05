@@ -76,7 +76,6 @@ These techniques significantly improve model performance, especially for predict
   - Implemented early stopping to prevent overfitting
   - Applied cross-validation for hyperparameter tuning
   - Used feature selection to reduce model complexity
-  - Applied SMOTE to handle imbalanced regression
 
 ### 4. Evaluation
 - **Performance Metrics**:
