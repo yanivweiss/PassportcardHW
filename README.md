@@ -91,7 +91,7 @@ Key attributes in the datasets:
 
 ### Descriptive Statistics
 
-The key numerical features in the dataset have the following statistics:
+The key numerical features in the dataset have the following statistics based on our analysis:
 
 | Feature | Mean | Median | Std Dev | Min | Max | Skewness | Kurtosis |
 |---------|------|--------|---------|-----|-----|----------|----------|
@@ -105,12 +105,12 @@ The key numerical features in the dataset have the following statistics:
 
 ![Claims Distribution](outputs/figures/claims_distribution.png)
 
-This histogram illustrates the distribution of claim amounts (TotPaymentUSD). The distribution is heavily right-skewed, with a mean of $312.45 and a median of $175.80, indicating that while most claims are small, a few very large claims pull the average higher. The positive skewness (6.84) suggests significant outliers on the higher end, which may represent complex medical procedures, hospitalizations, or specialized treatments. The high kurtosis (82.31) confirms the presence of extreme values far from the center of the distribution.
+This histogram illustrates the distribution of claim amounts (TotPaymentUSD). Based on our analysis, the distribution is heavily right-skewed, with a mean of $312.45 and a median of $175.80, indicating that while most claims are small, a few very large claims pull the average higher. The positive skewness suggests significant outliers on the higher end, which may represent complex medical procedures, hospitalizations, or specialized treatments.
 
-Further analysis shows that:
-- 75% of claims are below $350
-- 90% of claims are below $720
-- The top 1% of claims (above $2,800) account for over 15% of total claim value
+Our analysis indicates that:
+- Approximately 75% of claims are below $350
+- Approximately 90% of claims are below $720
+- The top 1% of claims (above $2,800) account for a significant portion of total claim value
 
 This long-tailed distribution influenced our modeling approach, necessitating transformations to handle the skewness effectively.
 
@@ -311,11 +311,11 @@ This heatmap visualizes feature correlations. We observe:
 
 3. **Log Transformation**:
    - Applied log transformation to the target variable (TotPaymentUSD) to address skewness
-   - This improved model performance by making the target distribution more normal
+   - Based on our analysis, this improved model performance by making the target distribution more normal
 
-   The log transformation significantly reduced skewness (from 6.84 to 0.51) and kurtosis (from 82.31 to 0.38), creating a more normally distributed target that improves model training.
+   The log transformation significantly reduced skewness and kurtosis, creating a more normally distributed target that improves model training.
 
-   The log transformation improved our model's R² from 0.68 to 0.84 and reduced RMSE by 27.3%.
+   According to our experiments, the log transformation improved our model's R² from approximately 0.68 to 0.84 and reduced RMSE substantially.
 
 ### Feature Selection
 
@@ -360,12 +360,12 @@ The feature engineering process provided progressive improvements to model perfo
 
 We evaluated several regression models and selected XGBoost as our primary model due to:
 
-1. **Superior Performance**: XGBoost consistently outperformed other models in our evaluations
+1. **Superior Performance**: Based on our analysis, XGBoost consistently outperformed other models in our evaluations
 2. **Handling of Missing Values**: Inherent ability to handle missing values
 3. **Feature Importance**: Provides clear feature importance metrics
 4. **Handling Non-linear Relationships**: Effectively captures complex non-linear patterns in the data
 
-The models evaluated and their performance:
+The models evaluated and their performance based on our testing:
 
 | Model | RMSE | MAE | R² | MAPE | Training Time (s) |
 |-------|------|-----|-----|------|------------------|
@@ -380,7 +380,7 @@ The models evaluated and their performance:
 
 This figure compares the performance of different models across multiple metrics, normalized to show relative performance. XGBoost outperforms other models across all metrics, with particularly strong advantages in RMSE and R² metrics.
 
-When analyzing why tree-based models outperformed linear models:
+From our analysis of why tree-based models outperformed linear models:
 - Linear models struggled with the non-linear relationships between features and the target
 - XGBoost captured complex interactions that weren't explicitly encoded as features
 - The hierarchical splitting in tree-based models naturally handled the distinct subgroups in the data
@@ -748,101 +748,93 @@ The prediction model enables several business applications:
 
 This visualization shows our risk tiering system, which segments members into risk categories based on predicted claim amounts.
 
+Our analysis suggests that:
+
 - **Segment customers into risk tiers for underwriting**:
   - Automated risk scoring for new and existing members
   - Dynamic risk reassessment as new claims data becomes available
   - Risk-adjusted pricing recommendations
 
-  Our analysis shows that the highest risk segment (10% of members) accounts for 38% of total claim costs, while the lowest risk segment (40% of members) accounts for only 12% of costs.
+  Our analysis indicates that the highest risk segment (approximately 10% of members) accounts for a substantial portion of total claim costs, while the lowest risk segment (approximately 40% of members) accounts for a much smaller portion.
 
 - **Identify high-risk policyholders for targeted intervention**:
   - Early identification of members transitioning to higher risk categories
   - Personalized intervention recommendations based on key risk factors
   - ROI estimation for different intervention strategies
 
-  A pilot program focusing on the top 5% highest-risk members achieved a 22% reduction in subsequent claims through targeted interventions.
+  Based on our analysis, targeted interventions for high-risk members could potentially lead to reduced subsequent claims.
 
 - **Assess portfolio-level risk for financial planning**:
   - Aggregate risk forecasting for financial reserves
   - Scenario analysis for different portfolio compositions
   - Trend monitoring for emerging risk patterns
 
-  Portfolio-level predictions have shown accuracy within ±8% for quarterly financial projections.
-
 ### 2. Premium Optimization
 
-This analysis shows the relationship between predicted risk, current premiums, and recommended adjustments. The model enables:
+This analysis shows the relationship between predicted risk, current premiums, and recommended adjustments. The model could potentially enable:
 
 - **Data-driven premium adjustments based on predicted claim amounts**:
-  - Automated premium recommendations based on individual risk profiles
+  - Premium recommendations based on individual risk profiles
   - Regular reassessment as member health status changes
   - Premium adjustment simulations to balance competitiveness and profitability
 
-  Our analysis identified 15% of policies with premiums misaligned with predicted risk by more than 20%.
+  Our analysis suggests that there may be policies with premiums misaligned with predicted risk.
 
 - **Develop more granular pricing models**:
   - Factor-based pricing incorporating key predictive features
   - Dynamic pricing based on evolving risk profiles
   - Competitive analysis of risk-adjusted pricing
 
-  The granular approach improved pricing accuracy by 27% compared to traditional demographic-based models.
+  A more granular approach to pricing could potentially improve pricing accuracy compared to traditional demographic-based models.
 
 - **Identify over/under-priced customer segments**:
   - Cohort analysis to identify systematic pricing misalignments
   - Retention risk assessment for potentially under-priced segments
   - Opportunity identification for potentially over-priced segments
 
-  We identified three customer segments with significant pricing misalignment, representing an opportunity to improve margin by approximately 8%.
-
 ### 3. Resource Allocation
 
-Our risk-based resource allocation model supports:
+Our risk-based resource allocation model could support:
 
 - **Efficiently allocate customer service resources**:
   - Predictive staffing based on expected service needs
   - Proactive outreach to high-risk members
   - Specialized support teams for complex cases
 
-  Predictive resource allocation improved service efficiency by 18% in pilot regions.
+  Based on our analysis, allocating resources according to predicted risk could potentially improve service efficiency.
 
 - **Optimize claims processing workflow**:
   - Risk-based claims routing and prioritization
   - Fraud detection probability scoring
   - Specialized handling for complex claims
 
-  The optimized workflow reduced processing time by 24% for standard claims while maintaining accuracy.
+  A risk-based approach to claims processing could potentially reduce processing time for standard claims while maintaining accuracy.
 
 - **Target preventive care programs to high-risk members**:
   - Cost-benefit analysis of preventive interventions
   - Personalized program recommendations based on risk factors
   - Impact monitoring and program effectiveness assessment
 
-  Targeted preventive care initiatives showed ROI of 2.8:1 when focused on the medium-high risk segment.
+  Our analysis suggests that targeted preventive care initiatives could show positive ROI when focused on the medium-high risk segment.
 
 ### 4. Product Development
 
-Our analysis identifies potential new product categories based on risk patterns. The model enables:
+Our analysis identifies potential new product categories based on risk patterns. The model could enable:
 
 - **Identify opportunities for new insurance products**:
   - Risk pattern analysis to identify unmet needs
   - Microsegmentation for specialized offerings
   - Risk-return profiling for new product concepts
 
-  Analysis identified two underserved member segments representing a $12M annual premium opportunity.
-
 - **Tailor coverage options based on customer segmentation**:
   - Personalized coverage recommendation engine
   - Coverage gap analysis based on risk profiles
   - Dynamic coverage adjustment pathways
 
-  Tailored coverage options increased uptake by 23% in pilot markets.
-
 - **Design incentive programs for preventive care**:
   - ROI analysis of different incentive structures
   - Behavior change modeling based on member profiles
   - Personalized incentive recommendations
-
-  A targeted incentive program for preventive care achieved 34% participation and 16% reduction in subsequent claims among participants.
 
 ## Limitations and Assumptions
 
