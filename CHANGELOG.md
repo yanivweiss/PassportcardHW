@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2023-04-06
+
+### Optimized
+- Evaluated the effectiveness of all advanced features, identifying which provide the most significant impact
+- Customer behavior features proved highly valuable - 9 of the top 20 important features
+- Most impactful customer behavior features: days_since_last_claim, claim_regularity, and claim variance metrics
+- Date-based features and cyclical encoding significantly improved temporal pattern detection
+- Outlier detection and handling improved model resilience, especially for extreme claim amounts
+
+### Improved
+- Model performance increased dramatically with advanced features:
+  - RMSE improved by 23.32% (from 4290.81 to 3290.35)
+  - MAE improved by 23.79% (from 2712.98 to 2067.51)
+  - R² improved by 159.92% (from -0.35 to +0.21)
+- Fixed compatibility issues with latest imbalanced-learn library
+- Fixed error in regression confusion matrix calculation
+- Improved Q-Q plot implementation for better error distribution analysis
+
 ## [1.3.0] - 2023-04-06
 
 ### Added
@@ -174,3 +192,74 @@ All notable changes to this project will be documented in this file.
 - Implemented model saving and loading capabilities
 - Added CSV export for enhanced features
 - Created visualization directory for storing plot outputs
+
+## 2023-04-05
+### Added
+- Comprehensive fairness analysis module for evaluating model fairness across different demographic groups
+- Explainability module with SHAP-based feature importance visualization
+- Bias mitigation techniques including reweighting, adversarial debiasing, and fairness constraints
+- Model auditing framework for regularly monitoring model performance across different segments
+- Unit tests for all new components
+
+### Changed
+- Improved feature selection workflow
+- Enhanced temporal cross-validation for better model evaluation
+- Removed SMOTE implementation (as it's more suitable for classification than regression)
+- Refactored code for better modularity and maintainability
+
+### Fixed
+- Unicode character handling in reports
+- Various minor bugs and edge cases
+- Improved error handling throughout the codebase
+
+## 2023-03-22
+### Added
+- Advanced feature engineering techniques
+  - Customer behavior features
+  - Service distribution analysis
+  - Cyclical encoding for date features
+  - Questionnaire response analysis
+  - Claims pattern recognition
+  - Recency, frequency, and monetary features
+  - Risk score calculations
+- Enhanced data preprocessing
+  - Advanced outlier detection
+  - Better missing value handling
+  - KNN imputation
+  - Feature scaling options
+- Expanded model evaluation
+  - RMSE, MAE, R², MAPE metrics
+  - Error analysis tools
+  - Regression confusion matrix
+  - Temporal cross-validation
+- Feature selection methods
+  - XGBoost importance
+  - Lasso feature selection
+  - Mutual information
+  - Recursive feature elimination
+- SMOTE implementation for imbalanced regression data
+- Focal loss implementation for regression
+- Comprehensive testing suite
+- Visualizations for all major components
+
+### Changed
+- Refactored pipeline for better modularity
+- Improved documentation and code comments
+- Enhanced error handling
+
+## 2023-03-10
+### Added
+- Initial version with basic data preparation and feature engineering
+- Simple model training script
+- Base feature set
+- Basic visualizations
+
+## [1.3.2] - 2023-04-07
+
+### Changed
+- Moved Model Auditing from a standalone module to the Business Recommendations section of README.md
+- Fixed issues with explainability module:
+  - Improved SHAP value handling for different model types
+  - Enhanced error handling in comparison of global and local explanations
+  - Better support for different SHAP value shapes and formats
+- Fixed potential encoding issues in report generation
