@@ -1,13 +1,21 @@
 # Changelog
 
-## [1.2.1] - 2023-04-07
+All notable changes to this project will be documented in this file.
+
+## [1.2.2] - 2023-04-05
 
 ### Fixed
-- Resolved issue with Member_ID data type mismatch during risk score feature interaction
-- Improved risk score calculation to successfully incorporate claims data
-- Fixed MAPE calculation in XGBoost evaluation metrics to handle small values correctly
+- Updated README.md image paths to correctly display images
+- Fixed relative paths for images in subfolders (visualizations and visualizations/business_insights)
+- Improved overall document formatting
+
+## [1.2.1] - 2023-04-05
+
+### Added
+- Fixed data type handling to improve reliability across datasets
+- Enhanced risk score calculation with claims data integration
+- Improved metric calculations for better evaluation accuracy
 - Added more robust error handling throughout the pipeline
-- Fixed file existence error in main script when moving the business report
 
 ## [1.2.0] - 2023-04-07
 
