@@ -205,9 +205,17 @@ def train_or_load_model(features_df, force_train=False):
         # Prepare data for XGBoost
         X_train, X_test, y_train, y_test, feature_cols = prepare_data_for_xgboost(features_df)
         
+        # Check if X_train is a numpy array and convert to DataFrame if needed
+        if isinstance(X_train, np.ndarray):
+            X_train_df = pd.DataFrame(X_train, columns=[f'feature_{i}' for i in range(X_train.shape[1])])
+            # Update feature_cols to match the new column names
+            feature_cols = X_train_df.columns.tolist()
+        else:
+            X_train_df = X_train
+        
         # Train the model
         model_info = train_xgboost_model(
-            X_train, y_train, 
+            X_train_df, y_train, 
             test_size=0.2, 
             random_state=42, 
             optimize=True,
