@@ -20,7 +20,6 @@ The project implements several advanced data science techniques to improve predi
 ### Advanced Modeling
 - **Feature Selection**: Multiple methods (XGBoost, Lasso, SelectKBest) with visualization of importance
 - **Temporal Cross-Validation**: Time-based validation with proper gaps between train/test periods
-- **Custom Focal Loss**: Special loss function that focuses more on hard-to-predict claim amounts
 - **Error Analysis**: Comprehensive analysis of prediction errors with regression confusion matrix
 
 These techniques significantly improve model performance, especially for predicting high-value claims and handling temporal patterns in insurance data.
