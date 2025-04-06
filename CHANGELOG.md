@@ -2,6 +2,15 @@
 
 All notable changes to the PassportCard Insurance Claims Prediction project will be documented in this file.
 
+## [1.1.1] - 2023-04-07
+
+### Fixed
+- Fixed duplicate graph references in README.md
+- Ensured every graph has specific analysis tailored to its content
+- Improved graph naming consistency throughout the README
+- Added quantitative details to visualization analyses for better clarity
+- Replaced generic explanations with graph-specific insights
+
 ## [1.1.0] - 2023-04-06
 
 ### Added
