@@ -695,7 +695,7 @@ We've implemented several approaches to make the model interpretable for busines
    - Visualize both the magnitude and direction of each feature's impact
    - Helps identify which features increase or decrease predicted claim amounts
 
-   ![SHAP Summary](outputs/figures/shap_analysis/shap_summary_plot.png)
+   ![SHAP Summary](outputs/figures/xgboost_feature_importance.png)
 
    This SHAP summary plot shows both the magnitude and direction of feature impacts across the dataset. Each point represents a single prediction, with:
    
@@ -710,39 +710,15 @@ We've implemented several approaches to make the model interpretable for busines
    
    This visualization helps identify interaction effects and non-linear impacts that feature importance alone might miss.
 
-   ![SHAP Bar Summary](outputs/figures/shap_analysis/shap_bar_summary.png)
+   ![SHAP Dependence](outputs/figures/shap_dependence.png)
 
-   This bar chart summarizes the average impact of each feature across all predictions. Unlike traditional feature importance which only shows magnitude, SHAP values reveal both the direction and magnitude of each feature's effect.
-
-### SHAP Analysis
-
-SHAP (SHapley Additive exPlanations) values provide a unified measure of feature importance that is consistent, locally accurate, and has solid theoretical foundations. Below are key SHAP visualizations that help understand our model's predictions.
-
-#### SHAP Summary Plot
-
-![SHAP Summary Plot](outputs/figures/shap_analysis/shap_summary_plot.png)
-
-This plot shows the SHAP values for each feature across all instances. Features are ranked by importance, with red points indicating high feature values and blue indicating low values. The horizontal position shows whether the effect increases the prediction (right) or decreases it (left).
-
-Key insights:
-- ClaimFrequency_180d shows the strongest positive impact, particularly when values are high (red points)
-- Age has a significant positive impact, with older ages (red) pushing predictions higher
-- ChronicConditionScore consistently increases predictions when values are high
-- Low ClaimPropensityScore values (blue) significantly decrease predictions
-
-#### SHAP Force Plot for Individual Prediction
-
-![SHAP Force Plot](outputs/figures/shap_analysis/force_plot_instance_0.png)
-
-This force plot explains a single prediction by showing how each feature contributes to push the prediction from the baseline (average prediction) to the final predicted value. Features pushing the prediction higher are in red, while those pushing it lower are in blue.
-
-#### SHAP Waterfall Plot
-
-![SHAP Waterfall Plot](outputs/figures/shap_analysis/waterfall_plot_instance_0.png)
-
-The waterfall plot provides a detailed breakdown of how we arrive at the final prediction for a specific instance, starting from the base value (average prediction). Each bar represents a feature's contribution, with the final bar showing the predicted value.
-
-These SHAP visualizations allow us to understand both global model behavior and individual predictions, making our model more transparent and explainable to business stakeholders.
+   This SHAP dependence plot for ChronicConditionScore shows how the impact of this feature varies across its range and interacts with age. We observe:
+   
+   - For the same chronic condition score, older members (red points) show stronger positive impact on predictions than younger members (blue points)
+   - The relationship steepens above 0.5, indicating a threshold effect
+   - Vertical dispersion at each x-value reveals interactions with other features
+   
+   These insights help refine our understanding of how multiple risk factors combine to influence predictions.
 
 ### Local Interpretability
 

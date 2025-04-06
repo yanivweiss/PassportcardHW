@@ -1,5 +1,39 @@
 # Changelog
 
+All notable changes to the PassportCard Insurance Claims Prediction project will be documented in this file.
+
+## [1.1.0] - 2023-04-06
+
+### Added
+- Added comprehensive SHAP analysis section to the README with enhanced visualizations
+- Added visualization modules in `src/visualization/` for generating beautiful graphs
+- Added SHAP visualization utilities for model explainability
+- Added visualization generation script (`src/generate_visualizations.py`)
+
+### Changed
+- Improved graph aesthetics and readability throughout the project
+- Fixed broken image links in README
+- Enhanced correlation heatmap visualization
+- Enhanced feature importance visualization
+- Enhanced predictions vs actual visualization
+- Enhanced error distribution visualization
+- Added detailed error analysis visualizations
+
+### Fixed
+- Fixed all broken links to graphs in README
+- Fixed inconsistent path separators (backslash vs. forward slash)
+- Fixed distribution comparison visualization
+
+## [1.0.0] - 2023-04-05
+
+### Added
+- Initial release of the PassportCard Insurance Claims Prediction system
+- Comprehensive README with project overview and detailed documentation
+- Feature engineering pipeline
+- Model development and evaluation
+- Business insights and applications
+- Limitations and assumptions analysis
+
 ## [3.3.0] - 2025-04-06
 
 ### Removed
@@ -165,8 +199,6 @@
 - Eliminated correlation bias between independent and dependent variables
 - Improved model generalizability by focusing on true predictive factors
 
-All notable changes to this project will be documented in this file.
-
 ## [1.3.1] - 2023-04-06
 
 ### Optimized
@@ -322,3 +354,12 @@ All notable changes to this project will be documented in this file.
 - Added comprehensive fix script (passportcard_fix_all.py) to address both issues at once
 - Created more detailed documentation in the README
 - Applied fixes with minimal changes to preserve the original notebook structure
+
+## [1.1.1] - 2023-04-06
+
+### Fixed
+- Fixed all broken image links in README.md
+- Created missing image files using appropriate alternatives
+- Ensured consistent path formatting for image references
+- Created image redirects for better organization and maintainability
+- Added script src/fix_readme_images.py to manage image references
