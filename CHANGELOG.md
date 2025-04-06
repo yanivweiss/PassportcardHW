@@ -2,6 +2,23 @@
 
 All notable changes to the PassportCard Insurance Claims Prediction project will be documented in this file.
 
+## [1.1.4] - 2023-04-08
+
+### Fixed
+- Updated image paths in README.md to use correct locations for existing images:
+  - Changed `risk_score_distribution.png` to use path from `outputs/figures/business_insights/`
+  - Changed `model_comparison.png` to use path from `outputs/figures/feature_evaluation/`
+  - Changed `residual_plot.png` to use path from `outputs/figures/predictions/`
+- Removed references to non-existing images and their detailed descriptions:
+  - Removed `missing_value_heatmap.png`
+  - Removed `outlier_box_plot.png`
+  - Removed `error_distribution_before_after_capping.png`
+  - Removed `feature_interaction.png`
+  - Removed `scaling_comparison.png`
+  - Removed `risk_segmentation.png`
+  - Removed `temporal_stability_analysis.png`
+- Preserved crucial information from removed sections by incorporating it into surrounding text
+
 ## [1.1.3] - 2023-04-07
 
 ### Fixed
