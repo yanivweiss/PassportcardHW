@@ -2,6 +2,18 @@
 
 All notable changes to the PassportCard Insurance Claims Prediction project will be documented in this file.
 
+## [1.1.2] - 2023-04-07
+
+### Changed
+- Completely reorganized README.md to create a more professional documentation
+- Improved structure by grouping similar topics together
+- Fixed all image paths to ensure proper rendering
+- Eliminated redundancy, particularly in the SHAP analysis section
+- Added clearer section hierarchy with improved heading levels
+- Streamlined explanations for better readability
+- Consolidated related information
+- Reduced unnecessary text while preserving important details
+
 ## [1.1.1] - 2023-04-07
 
 ### Fixed
