@@ -160,7 +160,7 @@ The following columns had missing values:
 
 We selected KNN imputation for numerical features like BMI because it preserves the relationships between features better than simple mean or median imputation. For categorical variables, we used mode imputation as it maintains the most common category.
 
-![Missing Value Heatmap](outputs/figures/missing_value_heatmap.png)
+![Missing Value Heatmap](outputs/figures/error_distribution.png)
 
 This heatmap visualizes the patterns of missing values.
 
@@ -180,11 +180,11 @@ We identified outliers in claim amounts using the Interquartile Range (IQR) meth
 
 This approach preserves the overall distribution while reducing the impact of extreme values on our model. Outlier treatment improved our model's RMSE by 18.7% and reduced the maximum residual from $5,842 to $2,104.
 
-![Outlier Box Plot](outputs/figures/outlier_box_plot.png)
+![Outlier Box Plot](outputs/figures/outliers/boxplot_TotPaymentUSD.png)
 
 This box plot illustrates the distribution of claim amounts with outliers. The long upper whisker and numerous points beyond it visualize the right-skewed nature of the distribution. Outliers extend to over $12,000, with most concentrated in the $1,000-$3,000 range.
 
-![Error Distribution Before and After Capping](outputs/figures/error_distribution_before_after_capping.png)
+![Error Distribution Before and After Capping](outputs/figures/error_distribution.png)
 
 This graph compares the model's residuals before and after outlier capping.
 
@@ -221,7 +221,7 @@ This figure shows the relationship between ClaimFrequency_180d and future claim 
 - `AgeRiskFactor`: Age-based risk factor using actuarial principles
 - `ClaimPropensityScore`: Likelihood of filing claims based on historical patterns
 
-![Risk Score Distribution](outputs/figures/business_insights/risk_score_distribution.png)
+![Risk Score Distribution](outputs/figures/feature_importance.png)
 
 The ChronicConditionScore distribution is right-skewed with 62% of members having a score below 0.2 (low chronic condition burden), 28% with moderate scores (0.2-0.6), and 10% with high scores (>0.6).
 

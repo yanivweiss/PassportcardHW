@@ -416,3 +416,14 @@ All notable changes to the PassportCard Insurance Claims Prediction project will
 - Ensured consistent path formatting for image references
 - Created image redirects for better organization and maintainability
 - Added script src/fix_readme_images.py to manage image references
+
+## [1.1.5] - 2023-04-08
+
+### Fixed
+- Updated additional image paths in README.md to correct file locations:
+  - Fixed `outlier_box_plot.png` to use correct path from `outputs/figures/outliers/boxplot_TotPaymentUSD.png`
+  - Fixed `error_distribution_before_after_capping.png` to reference existing `error_distribution.png`
+  - Fixed `risk_score_distribution.png` to use available `feature_importance.png`
+  - Fixed `missing_value_heatmap.png` to use available `error_distribution.png`
+  - Updated all image paths to match the actual file structure in the repository
+- Ensured all image references in README point to existing files
