@@ -184,7 +184,7 @@ This approach preserves the overall distribution while reducing the impact of ex
 
 This box plot illustrates the distribution of claim amounts with outliers. The long upper whisker and numerous points beyond it visualize the right-skewed nature of the distribution. Outliers extend to over $12,000, with most concentrated in the $1,000-$3,000 range.
 
-![Error Distribution Before and After Capping](outputs/figures/error_distribution.png)
+![Error Distribution](outputs/figures/error_distribution.png)
 
 This graph compares the model's residuals before and after outlier capping.
 
@@ -221,7 +221,7 @@ This figure shows the relationship between ClaimFrequency_180d and future claim 
 - `AgeRiskFactor`: Age-based risk factor using actuarial principles
 - `ClaimPropensityScore`: Likelihood of filing claims based on historical patterns
 
-![Risk Score Distribution](outputs/figures/feature_importance.png)
+![Feature Importance](outputs/figures/feature_importance.png)
 
 The ChronicConditionScore distribution is right-skewed with 62% of members having a score below 0.2 (low chronic condition burden), 28% with moderate scores (0.2-0.6), and 10% with high scores (>0.6).
 
@@ -484,6 +484,8 @@ This predictive model should NOT be used for:
 - Individual-level decisions without human review
 
 ## Business Applications
+
+The prediction model enables several business applications:
 
 ### 1. Risk Assessment
 
