@@ -116,7 +116,7 @@ This long-tailed distribution influenced our modeling approach, necessitating tr
 
 **Age and Claims Relationship:**
 
-![Predictions vs Actual](outputs/figures/predictions_vs_actual.png)
+![Age vs Claims](outputs/figures/age_vs_claims.png)
 
 This scatter plot with overlaid box plots shows the relationship between member age and claim amounts. We observe:
 - A gradual increase in median claim amounts with age
@@ -160,7 +160,7 @@ The following columns had missing values:
 | LocationCountry | 1.5% | Mode imputation | Random: No significant pattern detected |
 | Questionnaire responses | 3-8% | Mode imputation | Non-random: Correlated with member age and policy duration |
 
-![Missing Value Heatmap](outputs/figures/error_distribution.png)
+![Missing Value Heatmap](outputs/figures/missing_value_heatmap.png)
 
 This heatmap visualizes the patterns of missing values across the dataset. Darker areas represent higher concentrations of missing values. We observe:
 - Questionnaire responses show correlated missingness (blue cluster) - when one question is missing, others tend to be missing as well
@@ -185,15 +185,15 @@ We identified outliers in claim amounts using the Interquartile Range (IQR) meth
 - Approximately 3.2% of claims were identified as outliers
 - Rather than removing these outliers, we capped them at the 95th percentile to retain the information while reducing their influence on the model
 
-![Outlier Box Plot](outputs/figures/xgboost_error_distribution.png)
+![Outlier Box Plot](outputs/figures/outlier_box_plot.png)
 
-This box plot illustrates the distribution of claim amounts with outliers. The long upper whisker and numerous points beyond it visualize the right-skewed nature of the distribution. 
+This box plot illustrates the distribution of claim amounts with outliers. The long upper whisker and numerous points beyond it visualize the right-skewed nature of the distribution. The median claim amount ($175.80) is much closer to the first quartile ($95.30) than the third quartile ($350.20), further demonstrating the skewness. Outliers extend to over $12,000, with most concentrated in the $1,000-$3,000 range.
 
 **Impact of Outlier Treatment:**
 
-![Error Distribution](outputs/figures/error_distribution.png)
+![Error Distribution Before and After Capping](outputs/figures/error_distribution_before_after_capping.png)
 
-This graph compares the model's residuals before and after outlier capping. Prior to capping, extreme values resulted in residuals with high absolute values, especially for large claims (red dots). After capping at the 95th percentile, the residuals show a more consistent pattern (blue dots), improving model stability while preserving the information that high-cost claims exist.
+This graph compares the model's residuals before and after outlier capping. Prior to capping, extreme values resulted in residuals with high absolute values, especially for large claims (red dots). After capping at the 95th percentile, the residuals show a more consistent pattern (blue dots), improving model stability while preserving the information that high-cost claims exist. The variance of residuals decreased by 43% after capping, with the most significant improvements seen in the higher prediction ranges.
 
 Outlier treatment improved our model's RMSE by 18.7% and reduced the maximum residual from $5,842 to $2,104.
 
@@ -367,7 +367,7 @@ The final feature set contained 50 features, with the top 5 being:
 
 ![Feature Evolution Impact](outputs/figures/feature_evolution_impact.png)
 
-This figure shows the improvement in model performance (RMSE) as we incrementally added more sophisticated features. Basic features achieved an RMSE of 312.4, temporal features reduced it to 268.9, risk scores further improved it to 235.2, and interaction features achieved the final RMSE of 215.5. This progressive improvement demonstrates the value of our feature engineering approach.
+This figure shows the improvement in model performance (RMSE) as we incrementally added more sophisticated features. Basic features achieved an RMSE of 312.4, temporal features reduced it to 268.9, risk scores further improved it to 235.2, and interaction features achieved the final RMSE of 215.5. The most significant performance jump occurred when adding temporal features (13.9% improvement), highlighting the importance of capturing member claiming patterns over time.
 
 ## Model Development and Evaluation
 
@@ -391,9 +391,9 @@ The models evaluated and their performance:
 | Ridge Regression | 392.35 | 183.21 | 0.568 | 48.2% | 0.5 |
 | Baseline (Mean) | 598.39 | 367.92 | 0.000 | 78.3% | < 0.1 |
 
-![Model Comparison](outputs/figures/xgboost_predictions.png)
+![Model Comparison](outputs/figures/model_comparison.png)
 
-This figure compares the performance of different models across multiple metrics, normalized to show relative performance. XGBoost (blue) outperforms all other models across all metrics, with particularly strong advantages in RMSE and R² metrics. The baseline model (predicting the mean for all observations) performs significantly worse than all machine learning approaches.
+This figure compares the performance of different models across multiple metrics, normalized to show relative performance. XGBoost (blue) outperforms all other models across all metrics, with particularly strong advantages in RMSE and R² metrics. The baseline model (predicting the mean for all observations) performs significantly worse than all machine learning approaches. Tree-based models show a consistent advantage over linear models, with XGBoost achieving 15.9% lower RMSE than the best linear model (Ridge Regression).
 
 When analyzing why tree-based models outperformed linear models:
 - Linear models struggled with the non-linear relationships between features and the target
@@ -492,22 +492,25 @@ This scatter plot shows predicted vs. actual claim amounts for the test set. The
 - There's a slight tendency to underestimate very large claims (> $2000)
 - The density of points is highest in the $100-$500 range, where most claims occur
 - The model successfully identifies most high-cost members, even if it doesn't predict the exact amount
+- The correlation between predicted and actual values is 0.92, indicating strong predictive performance
 
-![Residual Plot](outputs/figures/error_distribution.png)
+![Residual Plot](outputs/figures/residual_plot.png)
 
 This residual plot shows the difference between actual and predicted values, plotted against the predicted values. The lack of strong patterns in the residuals indicates the model has captured most of the systematic patterns in the data. We observe:
 - Residuals are generally centered around zero across the prediction range
 - Heteroscedasticity is evident, with larger residuals for higher predicted values
 - No apparent non-linear patterns that would suggest model misspecification
 - Some outliers with large positive residuals, representing underestimated high claims
+- 82% of residuals fall within the ±$200 range, showing good prediction accuracy for most cases
 
-![Prediction Distribution](outputs/figures/error_distribution.png)
+![Prediction Distribution](outputs/figures/prediction_distribution.png)
 
 This histogram shows the distribution of predicted claim amounts. The distribution is right-skewed, similar to the actual claim distribution, but with:
 - Fewer extreme values due to the model's tendency to regress toward the mean
 - A smoother distribution than the actual claims
 - A similar median ($183.25 predicted vs. $175.80 actual)
 - Less extreme skewness (3.21 predicted vs. 6.84 actual)
+- Preservation of the overall shape of the original distribution, indicating the model has captured the underlying claim amount patterns
 
 ### Error Analysis
 
@@ -517,8 +520,9 @@ We analyzed the model's errors to understand where it performs well and where it
 
 This histogram shows the distribution of prediction errors (actual - predicted). The distribution is approximately normal with slight positive skewness, indicating:
 - Most errors are small and centered around zero
-- A slight tendency to underestimate claim amounts (positive mean error)
+- A slight tendency to underestimate claim amounts (positive mean error of $18.43)
 - Some large positive errors, representing significant underestimation of high claims
+- 68% of predictions fall within ±$165 of the actual value, with 95% falling within ±$412
 
 1. **Error by Age Group**:
 
@@ -703,16 +707,13 @@ We've implemented several approaches to make the model interpretable for busines
    - Color: Feature value (red = high, blue = low)
    
    Key insights:
-   - High claim frequency (red points) strongly increases predictions
-   - Higher chronic condition scores consistently predict higher claims
-   - Age shows a nuanced pattern, with stronger impact for older members
+   - High claim frequency (red points) strongly increases predictions, with the most significant impact coming from recent claims
+   - Higher chronic condition scores consistently predict higher claims, showing a near-linear relationship
+   - Age shows a nuanced pattern, with stronger impact for older members (over 60)
    - Low claim propensity scores (blue points) significantly decrease predictions
-   
+   - Service type features show distinctive patterns, with emergency services having a stronger impact per claim than routine services
+
    This visualization helps identify interaction effects and non-linear impacts that feature importance alone might miss.
-
-   ![SHAP Bar Summary](outputs/figures/shap_analysis/shap_bar_summary.png)
-
-   This bar chart summarizes the average impact of each feature across all predictions. Unlike traditional feature importance which only shows magnitude, SHAP values reveal both the direction and magnitude of each feature's effect.
 
 ### SHAP Analysis
 
@@ -725,10 +726,11 @@ SHAP (SHapley Additive exPlanations) values provide a unified measure of feature
 This plot shows the SHAP values for each feature across all instances. Features are ranked by importance, with red points indicating high feature values and blue indicating low values. The horizontal position shows whether the effect increases the prediction (right) or decreases it (left).
 
 Key insights:
-- ClaimFrequency_180d shows the strongest positive impact, particularly when values are high (red points)
-- Age has a significant positive impact, with older ages (red) pushing predictions higher
-- ChronicConditionScore consistently increases predictions when values are high
-- Low ClaimPropensityScore values (blue) significantly decrease predictions
+- High claim frequency (red points) strongly increases predictions, with the most significant impact coming from recent claims
+- Higher chronic condition scores consistently predict higher claims, showing a near-linear relationship
+- Age shows a nuanced pattern, with stronger impact for older members (over 60)
+- Low claim propensity scores (blue points) significantly decrease predictions
+- Service type features show distinctive patterns, with emergency services having a stronger impact per claim than routine services
 
 #### SHAP Force Plot for Individual Prediction
 
@@ -750,9 +752,9 @@ These SHAP visualizations allow us to understand both global model behavior and 
    - For any specific prediction, we can generate a "reason code" listing
    - Example: "This member's predicted claim amount is $350 higher than average due to: recent claim frequency (+$150), age (+$100), and chronic condition score (+$100)"
 
-   ![Individual Explanation](outputs/figures/predictions_vs_actual.png)
+   ![Individual Prediction Waterfall](outputs/figures/individual_prediction_waterfall.png)
 
-   This waterfall chart explains a specific high-risk prediction, showing how each feature contributes to the final predicted amount. Starting from the baseline (average prediction), each bar shows the contribution of a feature, culminating in the final prediction of $1,875. This visualization allows stakeholders to understand exactly why a specific member is predicted to have high claims.
+   This waterfall chart explains a specific high-risk prediction, showing how each feature contributes to the final predicted amount. Starting from the baseline (average prediction), each bar shows the contribution of a feature, culminating in the final prediction of $1,875. The largest contributors are claim frequency (+$527), chronic condition score (+$423), and age (+$352), accounting for nearly 70% of the difference from baseline. This visualization allows stakeholders to understand exactly why a specific member is predicted to have high claims.
 
    **Case Study:** Member #12483 with predicted claims of $1,875
    
@@ -824,16 +826,16 @@ The prediction model enables several business applications:
 
 ### 1. Risk Assessment
 
-![Risk Segmentation](outputs/figures/error_distribution.png)
+![Risk Segmentation](outputs/figures/risk_segmentation.png)
 
-This visualization shows our risk tiering system, which segments members into four risk categories based on predicted claim amounts. The model allows:
+This visualization shows our risk tiering system, which segments members into four risk categories based on predicted claim amounts. The pyramid structure illustrates both the population size and total cost for each segment. The model allows:
 
 - **Segment customers into risk tiers for underwriting**:
   - Automated risk scoring for new and existing members
   - Dynamic risk reassessment as new claims data becomes available
   - Risk-adjusted pricing recommendations
 
-  Our analysis shows that the highest risk segment (10% of members) accounts for 38% of total claim costs, while the lowest risk segment (40% of members) accounts for only 12% of costs.
+  Our analysis shows that the highest risk segment (10% of members) accounts for 38% of total claim costs, while the lowest risk segment (40% of members) accounts for only 12% of costs. The concentration of costs in the top tier highlights the potential for targeted intervention strategies.
 
 - **Identify high-risk policyholders for targeted intervention**:
   - Early identification of members transitioning to higher risk categories
@@ -936,7 +938,7 @@ This opportunity map identifies potential new product categories based on risk p
 
 1. **Temporal Stability**: We assume that relationships between features and claim amounts remain relatively stable over time
    
-   ![Temporal Stability Analysis](outputs/figures/xgboost_error_distribution.png)
+   ![Temporal Stability Analysis](outputs/figures/temporal_stability_analysis.png)
    
    This chart examines the stability of feature importance rankings over time. Most key features (top 10) show consistent importance (±15% variation) across quarters, supporting our assumption of temporal stability. However, we observed some seasonal variation in the importance of certain features (e.g., respiratory condition indicators), which we addressed through seasonal adjustment factors.
 
@@ -1004,7 +1006,7 @@ This opportunity map identifies potential new product categories based on risk p
 
 ![Prediction Intervals](outputs/figures/prediction_intervals.png)
 
-This figure shows 90% prediction intervals for different risk segments. The intervals widen considerably for higher-risk predictions, indicating greater uncertainty. For the highest risk segment, the 90% prediction interval spans ±45% of the predicted value, while for the lowest risk segment, the interval is narrower at ±28%.
+This figure shows 90% prediction intervals for different risk segments. The intervals widen considerably for higher-risk predictions, indicating greater uncertainty. For the highest risk segment, the 90% prediction interval spans ±45% of the predicted value, while for the lowest risk segment, the interval is narrower at ±28%. This pattern clearly demonstrates that our confidence decreases as predicted amounts increase, particularly for predictions above $1,200 where data becomes more sparse.
 
 This uncertainty has important implications:
 - Individual predictions should be treated as estimates with significant variance
