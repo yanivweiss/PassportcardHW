@@ -158,7 +158,7 @@ The following columns had missing values:
 | LocationCountry | 1.5% | Mode imputation | Random: No significant pattern detected |
 | Questionnaire responses | 3-8% | Mode imputation | Non-random: Correlated with member age and policy duration |
 
-![Missing Value Heatmap](outputs/figures/error_distribution.png)
+![Missing Value Heatmap](outputs/figures/missing_value_heatmap.png)
 
 This heatmap visualizes the patterns of missing values. We selected KNN imputation for numerical features like BMI because it preserves the relationships between features better than simple mean or median imputation. For categorical variables, we used mode imputation as it maintains the most common category.
 
@@ -176,11 +176,11 @@ We identified outliers in claim amounts using the Interquartile Range (IQR) meth
 - Approximately 3.2% of claims were identified as outliers
 - Rather than removing these outliers, we capped them at the 95th percentile
 
-![Outlier Box Plot](outputs/figures/xgboost_error_distribution.png)
+![Outlier Box Plot](outputs/figures/outlier_box_plot.png)
 
 This box plot illustrates the distribution of claim amounts with outliers. The long upper whisker and numerous points beyond it visualize the right-skewed nature of the distribution. Outliers extend to over $12,000, with most concentrated in the $1,000-$3,000 range.
 
-![Error Distribution Before and After Capping](outputs/figures/error_distribution.png)
+![Error Distribution Before and After Capping](outputs/figures/error_distribution_before_after_capping.png)
 
 This graph compares the model's residuals before and after outlier capping. Outlier treatment improved our model's RMSE by 18.7% and reduced the maximum residual from $5,842 to $2,104.
 
@@ -217,7 +217,7 @@ This figure shows the relationship between ClaimFrequency_180d and future claim 
 - `AgeRiskFactor`: Age-based risk factor using actuarial principles
 - `ClaimPropensityScore`: Likelihood of filing claims based on historical patterns
 
-![Risk Score Distribution](outputs/figures/feature_importance.png)
+![Risk Score Distribution](outputs/figures/risk_score_distribution.png)
 
 The ChronicConditionScore distribution is right-skewed with 62% of members having a score below 0.2 (low chronic condition burden), 28% with moderate scores (0.2-0.6), and 10% with high scores (>0.6).
 
@@ -226,7 +226,7 @@ The ChronicConditionScore distribution is right-skewed with 62% of members havin
 - `Age_BMI_Interaction`: Interaction between age and BMI, showing 23% improvement in predictive power
 - `ChronicRisk_ClaimFrequency`: Interaction between chronic risk and claim frequency
 
-![Feature Interaction](outputs/figures/correlation_heatmap.png)
+![Feature Interaction](outputs/figures/feature_interaction.png)
 
 This heatmap visualizes the Age_BMI_Interaction effect on predicted claim amounts, showing substantially higher predicted claims for older members with high BMI.
 
@@ -242,7 +242,7 @@ scaler = RobustScaler()
 X_scaled = scaler.fit_transform(X[numerical_features])
 ```
 
-![Scaling Comparison](outputs/figures/xgboost_feature_importance.png)
+![Scaling Comparison](outputs/figures/scaling_comparison.png)
 
 RobustScaler preserves the relative relationships between data points while reducing the impact of outliers, unlike StandardScaler which remains sensitive to outliers.
 
@@ -323,7 +323,7 @@ We selected XGBoost as our primary model due to:
 | Ridge Regression | 392.35 | 183.21 | 0.568 | 48.2% | 0.5 |
 | Baseline (Mean) | 598.39 | 367.92 | 0.000 | 78.3% | < 0.1 |
 
-![Model Comparison](outputs/figures/xgboost_predictions.png)
+![Model Comparison](outputs/figures/model_comparison.png)
 
 XGBoost achieved 15.9% lower RMSE than the best linear model (Ridge Regression).
 
@@ -377,13 +377,13 @@ This approach better simulates the real-world scenario where we use historical d
 
 ### Results Visualization and Error Analysis
 
-![Predictions vs Actual](outputs/figures/predictions_vs_actual.png)
-
-This scatter plot shows predicted vs. actual claim amounts, with correlation of 0.92 between predicted and actual values.
-
-![Residual Plot](outputs/figures/error_distribution.png)
+![Residual Plot](outputs/figures/residual_plot.png)
 
 Residuals are generally centered around zero, with 82% of residuals falling within the ±$200 range.
+
+![Error Distribution](outputs/figures/error_distribution.png)
+
+This histogram shows the distribution of prediction errors (actual - predicted). The distribution is approximately normal with slight positive skewness, with 68% of predictions falling within ±$165 of the actual value and 95% falling within ±$412.
 
 ![Error by Age](outputs/figures/error_by_age.png)
 
@@ -445,11 +445,9 @@ This force plot explains a single prediction by showing how each feature contrib
 
 ![SHAP Waterfall Plot](outputs/figures/shap_analysis/waterfall_plot_instance_0.png)
 
-The waterfall plot provides a detailed breakdown of how we arrive at the final prediction.
+The waterfall plot provides a detailed breakdown of how we arrive at the final prediction for a specific instance, starting from the base value (average prediction). Each bar represents a feature's contribution, with the final bar showing the predicted value.
 
 #### Case Study Example
-
-![Individual Prediction Waterfall](outputs/figures/shap_analysis/waterfall_plot_instance_0.png)
 
 Member #12483 with predicted claims of $1,875:
 - Claim frequency (7 claims in 180 days): +$527 above baseline
@@ -489,7 +487,7 @@ This predictive model should NOT be used for:
 
 ### 1. Risk Assessment
 
-![Risk Segmentation](outputs/figures/error_distribution.png)
+![Risk Segmentation](outputs/figures/risk_segmentation.png)
 
 This visualization shows our risk tiering system. Key findings:
 - The highest risk segment (10% of members) accounts for 38% of total claim costs

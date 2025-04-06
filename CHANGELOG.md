@@ -2,6 +2,21 @@
 
 All notable changes to the PassportCard Insurance Claims Prediction project will be documented in this file.
 
+## [1.1.3] - 2023-04-07
+
+### Fixed
+- Removed duplicate graph references in README.md
+- Assigned unique graph paths for each visualization
+- Ensured each graph is shown only once with its most relevant description
+- Fixed incorrect image references for:
+  - Missing Value Heatmap
+  - Outlier Box Plot
+  - Error Distribution
+  - Risk Segmentation
+  - Feature Interaction
+  - Scaling Comparison
+  - Model Comparison
+
 ## [1.1.2] - 2023-04-07
 
 ### Changed
