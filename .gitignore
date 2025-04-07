@@ -36,11 +36,11 @@ coverage.xml
 .cursor/
 
 # Project specific
-*.pkl
-*.csv
+#*.pkl / # Allowing
+#*.csv / # Allowing
 *.parquet
-*.h5
-*.log
+#*.h5 / # Allowing
+*.log 
 models/
 # visualizations/ # Allowing visualizations to be pushed to GitHub
 results/ 
