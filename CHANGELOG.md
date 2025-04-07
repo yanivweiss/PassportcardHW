@@ -427,3 +427,23 @@ All notable changes to the PassportCard Insurance Claims Prediction project will
   - Fixed `missing_value_heatmap.png` to use available `error_distribution.png`
   - Updated all image paths to match the actual file structure in the repository
 - Ensured all image references in README point to existing files
+
+## [1.0.1] - 2023-11-14
+
+### Changed
+- Removed synthetic data generation logic from the codebase
+- Modified `main.py` to remove the `--test` option that triggered synthetic data generation
+- Updated `src/run_prediction_pipeline.py` to display clear error messages when required data files are not found, instead of generating synthetic data
+- The pipeline now requires real data files to be present in the expected locations
+
+### Note
+- No changes were made to the `PassportcardHW.ipynb` notebook file
+
+## [1.0.0] - 2023-11-13
+
+### Added
+- Initial release
+- Data processing pipeline
+- Feature engineering functionality
+- Model training and evaluation
+- Prediction functionality

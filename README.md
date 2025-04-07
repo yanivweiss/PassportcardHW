@@ -616,33 +616,33 @@ This roadmap outlines our planned improvements with their expected impact and im
 
 ## Running the Prediction Pipeline
 
+To run the full prediction pipeline:
+
 ```bash
-# Run the end-to-end prediction pipeline
 python main.py
-
-# Run with basic features only
-python main.py --basic-features
-
-# Force training a new model
-python main.py --force-train
-
-# Skip business report generation
-python main.py --no-report
-
-# Run with test data (smaller dataset)
-python main.py --test
 ```
 
-The pipeline performs:
-1. Load and preprocess claims and member data
-2. Engineer features from the data
-3. Train a model or load a previously trained model
-4. Make predictions
-5. Analyze results and generate visualizations
+The pipeline requires the following data files to be present:
+- `data/processed/claims_data_clean.csv`
+- `data/processed/members_data_clean.csv`
 
-Prediction results are saved to:
-- `outputs/tables/prediction_results.csv`
-- `outputs/figures/predictions/`
+### Command Line Options
+
+You can customize the pipeline run with these options:
+
+- `--force-train`: Forces training a new model even if one already exists
+- `--basic-features`: Uses only basic features without advanced features
+- `--no-report`: Skips generating the business report
+
+Example with options:
+
+```bash
+python main.py --force-train --basic-features
+```
+
+### Note on Data Requirements
+
+As of version 1.0.1, the pipeline requires real data files to be present. The option to generate synthetic data has been removed. If the required data files are not found, the pipeline will exit with an error message.
 
 ## Running Tests
 
@@ -677,3 +677,18 @@ See [tests/README.md](tests/README.md) for more information on testing.
 - `error_analysis.py`: Prediction error analysis
 - `fairness_analysis.py`: Fairness metrics and bias detection
 - `explainability.py`: Model explainability using SHAP values
+
+## Recent Updates
+
+### v1.0.1 (2023-11-14)
+- Removed synthetic data generation capabilities from the codebase
+- The pipeline now requires real data files to be present to run
+- Enhanced error messages when required data files are not found
+- See CHANGELOG.md for complete details
+
+### v1.0.0 (2023-11-13)
+- Initial release with complete prediction pipeline
+- Advanced feature engineering capabilities
+- XGBoost model implementation
+- Business report generation
+- Visualization of prediction results

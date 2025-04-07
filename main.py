@@ -12,7 +12,6 @@ Options:
     --force-train       Force training a new model even if one exists
     --basic-features    Use only basic features without advanced ones
     --no-report         Skip generating business report
-    --test              Run with test data (smaller dataset)
 """
 
 import os
@@ -26,7 +25,6 @@ def main():
     parser.add_argument('--force-train', action='store_true', help='Force training a new model even if one exists')
     parser.add_argument('--basic-features', action='store_true', help='Use only basic features without advanced ones')
     parser.add_argument('--no-report', action='store_true', help='Skip generating business report')
-    parser.add_argument('--test', action='store_true', help='Run with test data (smaller dataset)')
     args = parser.parse_args()
     
     start_time = datetime.now()
@@ -39,17 +37,6 @@ def main():
     os.makedirs('visualizations', exist_ok=True)
     os.makedirs('outputs/figures/predictions', exist_ok=True)
     os.makedirs('outputs/tables', exist_ok=True)
-    
-    if args.test:
-        print("Running in TEST MODE with small sample data")
-        # Import and run test data generation
-        try:
-            from src.create_test_data import create_test_claims_data, create_test_members_data
-            create_test_claims_data(n_claims=500, n_members=50)
-            create_test_members_data(n_members=50)
-        except Exception as e:
-            print(f"Error creating test data: {e}")
-            return 1
     
     # Import and run the main prediction pipeline
     try:

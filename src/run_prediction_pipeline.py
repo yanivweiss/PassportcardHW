@@ -53,8 +53,16 @@ def load_and_preprocess_data():
     
     try:
         # Load data
-        claims_df = pd.read_csv('data/processed/claims_data_clean.csv')
-        members_df = pd.read_csv('data/processed/members_data_clean.csv')
+        claims_path = 'data/processed/claims_data_clean.csv'
+        members_path = 'data/processed/members_data_clean.csv'
+        
+        if not os.path.exists(claims_path) or not os.path.exists(members_path):
+            print(f"Error: Required data files not found at {claims_path} and/or {members_path}")
+            print("Please ensure data files exist before running the pipeline.")
+            return None, None
+            
+        claims_df = pd.read_csv(claims_path)
+        members_df = pd.read_csv(members_path)
         
         print(f"Loaded claims data: {claims_df.shape[0]} rows, {claims_df.shape[1]} columns")
         print(f"Loaded members data: {members_df.shape[0]} rows, {members_df.shape[1]} columns")
