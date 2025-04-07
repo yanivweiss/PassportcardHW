@@ -26,28 +26,19 @@
 
         | Metric | Value | Interpretation |
         |--------|-------|----------------|
-        | RMSE | 725.64 | Average prediction error in dollars |
-        | MAE | 377.93 | Average absolute prediction error in dollars |
-        | R² | -0.17 | Proportion of variance explained by the model |
-        | MAPE | 77.33% | Average percentage error |
+        | RMSE | 567.50 | Average prediction error in dollars |
+        | MAE | 310.13 | Average absolute prediction error in dollars |
+        | R² | 0.33 | Proportion of variance explained by the model |
+        | MAPE | 52.69% | Average percentage error |
 
-        The model explains approximately -17.1% of the variance in future claims, providing meaningful predictive power for business decisions.
+        The model explains approximately 32.7% of the variance in future claims, providing meaningful predictive power for business decisions.
 
 
         ## Key Predictors
 
         The most influential factors in predicting future claims are:
         
-- **claim_amount_360d_x**: 0.0397
-- **age_group_36_45**: 0.0298
-- **max_claim_360d_y**: 0.0270
-- **min_claim_amount**: 0.0263
-- **avg_claim_90d_x**: 0.0249
-- **age_claim_interaction**: 0.0245
-- **avg_claim_270d_y**: 0.0228
-- **age_group_36_45_1**: 0.0226
-- **age_group_56_65**: 0.0216
-- **policy_Premium**: 0.0213
+- Feature importance data is available but column names could not be matched.
 
         These findings suggest that historical claiming patterns and customer demographics are the strongest predictors of future claiming behavior.
 
@@ -111,7 +102,7 @@
 
         Based on our analysis, implementing the enhanced model and recommended actions could result in:
 
-        - Potential savings from targeted interventions: $10228.52
-        - Improved premium alignment resulting in average profitability of $-330.75 per member
-        - Percentage of profitable members after risk adjustment: 45.4%
+        - Potential savings from targeted interventions: $12149.97
+        - Improved premium alignment resulting in average profitability of $-388.10 per member
+        - Percentage of profitable members after risk adjustment: 31.6%
         
