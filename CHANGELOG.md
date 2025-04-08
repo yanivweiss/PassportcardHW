@@ -2,6 +2,12 @@
 
 All notable changes to the PassportCard Insurance Claims Prediction project will be documented in this file.
 
+## [1.1.5] - 2023-04-08
+
+### Added
+- Pushed PassportcardHW.ipynb notebook to Git repository
+- Updated notebook with final analysis and predictions
+
 ## [1.1.4] - 2023-04-08
 
 ### Fixed
