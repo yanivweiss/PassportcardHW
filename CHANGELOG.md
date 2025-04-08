@@ -2,6 +2,15 @@
 
 All notable changes to the PassportCard Insurance Claims Prediction project will be documented in this file.
 
+## [1.2.0] - 2023-04-08
+
+### Changed
+- Completely revised README.md with detailed project analysis
+- Added in-depth explanation of Section 4 (temporal cross-validation)
+- Added evidence-based reporting with metrics and visualizations
+- Improved technical instructions for setting up and running the project
+- Added directory structure and business impact details
+
 ## [1.1.9] - 2023-04-08
 
 ### Changed
