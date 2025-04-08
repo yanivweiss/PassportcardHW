@@ -2,6 +2,18 @@
 
 All notable changes to the PassportCard Insurance Claims Prediction project will be documented in this file.
 
+## [1.1.8] - 2023-04-08
+
+### Added
+- Added "Key Visualizations and Results" section to README.md with:
+  - Data exploration visualization explanations
+  - Feature correlation chart interpretations
+  - Actual vs. predicted test results analysis
+  - Detailed prediction evaluation metrics explanation
+  - Business impact visualization insights
+- Integrated images from the most recent notebook run
+- Provided detailed explanations for each visualization to highlight key insights
+
 ## [1.1.7] - 2023-04-08
 
 ### Changed
