@@ -2,6 +2,30 @@
 
 All notable changes to the PassportCard Insurance Claims Prediction project will be documented in this file.
 
+## [1.1.7] - 2023-04-08
+
+### Changed
+- Completely revised README.md to focus on notebook content and outputs:
+  - Added comprehensive "Detailed Analysis of Notebook Outputs" section with in-depth analysis of data insights
+  - Added specific numeric findings from the data (e.g., 573,034 claims, mean payment of $133.08)
+  - Detailed the model performance metrics and feature importance findings
+  - Enhanced descriptions of feature engineering techniques and target variable creation
+  - Included business applications and implementation guidance
+  - Updated technical instructions for running the notebook
+  - Added detailed data requirements and output files sections
+  - Expanded description of task objectives with more detailed explanations
+- Updated requirements.txt to include all necessary packages:
+  - Added python-dateutil for date handling functionality
+  - Added jupyter and notebook for running the notebook environment
+
+## [1.1.6] - 2023-04-08
+
+### Added
+- Created comprehensive unit tests for member_feature_engineering.py module
+- Tests cover feature extraction, preparation, and interactions
+- Validated functionality with synthetic test data
+- Ensured proper handling of demographic, policy, health indicator, and questionnaire features
+
 ## [1.1.5] - 2023-04-08
 
 ### Added
