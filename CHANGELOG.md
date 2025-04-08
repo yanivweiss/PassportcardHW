@@ -2,6 +2,17 @@
 
 All notable changes to the PassportCard Insurance Claims Prediction project will be documented in this file.
 
+## [1.1.9] - 2023-04-08
+
+### Changed
+- Simplified README.md by removing several sections:
+  - Removed "Detailed Analysis of Notebook Outputs" section and all subsections
+  - Removed "Notebook Structure and Outputs" section and all subsections
+  - Removed "Output Files" section
+  - Removed "Task Objectives Addressed" section
+  - Removed "License" section
+- Made the README more focused on key visualizations and essential repository usage information
+
 ## [1.1.8] - 2023-04-08
 
 ### Added
