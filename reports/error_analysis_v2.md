@@ -7,21 +7,21 @@
 
         ## Basic Error Statistics
 
-        - **Mean Absolute Error**: $310.13
-        - **Median Absolute Error**: $122.66
-        - **Mean Relative Error**: 2132.56%
-        - **90th percentile of Absolute Error**: $865.11
+        - **Mean Absolute Error**: $1685.96
+        - **Median Absolute Error**: $1024.99
+        - **Mean Relative Error**: 18700.38%
+        - **90th percentile of Absolute Error**: $3430.76
 
         ## Error Distribution
 
-        - **Under-predictions**: 127 (64.8%)
-        - **Over-predictions**: 69 (35.2%)
+        - **Under-predictions**: 21 (42.0%)
+        - **Over-predictions**: 29 (58.0%)
 
         ## High-Value Claims Performance
 
-        - **Count**: 20
-        - **Mean Absolute Error**: $1450.94
-        - **Mean Relative Error**: 67.07%
+        - **Count**: 5
+        - **Mean Absolute Error**: $4444.46
+        - **Mean Relative Error**: 34.14%
 
         ## Key Insights
 

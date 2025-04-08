@@ -1,0 +1,6 @@
+Member_ID,Age,Gender,PolicyStartDate,PolicyEndDate,total_claims,days_since_last_claim,days_since_first_claim,unique_months_with_claims,days_since_prev_claim_mean,days_since_prev_claim_median,days_since_prev_claim_std,days_since_prev_claim_min,days_since_prev_claim_max,TotPaymentUSD_sum,TotPaymentUSD_mean,TotPaymentUSD_median,TotPaymentUSD_std,TotPaymentUSD_min,TotPaymentUSD_max,claim_amount_diff_mean,claim_amount_diff_std,claim_amount_pct_change_mean,claim_amount_pct_change_std,avg_claim_per_month,claim_frequency,claim_regularity,claim_amount_volatility,future_6m_claims
+M001,35.0,M,2020-01-01,2022-01-01,2.0,3.0,4.0,1.0,1.0,1.0,0.0,1.0,1.0,300.0,150.0,150.0,70.71067811865476,100.0,200.0,100.0,0.0,100.0,0.0,1.0,12.0,0.0,0.4682826365473825,300.0
+M002,42.0,F,2020-01-02,2022-01-02,1.0,2.0,2.0,1.0,0.0,0.0,0.0,0.0,0.0,50.0,50.0,50.0,0.0,50.0,50.0,0.0,0.0,0.0,0.0,0.5,10.0,0.0,0.0,50.0
+M003,28.0,M,2020-01-03,2022-01-03,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,300.0,300.0,300.0,0.0,300.0,300.0,0.0,0.0,0.0,0.0,0.5,15.0,0.0,0.0,300.0
+M004,55.0,F,2020-01-04,2022-01-04,1.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,150.0,150.0,150.0,0.0,150.0,150.0,0.0,0.0,0.0,0.0,0.5,30.0,0.0,0.0,150.0
+M005,19.0,M,2020-01-05,2022-01-05,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0

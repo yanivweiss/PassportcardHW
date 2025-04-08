@@ -26,12 +26,12 @@
 
         | Metric | Value | Interpretation |
         |--------|-------|----------------|
-        | RMSE | 567.50 | Average prediction error in dollars |
-        | MAE | 310.13 | Average absolute prediction error in dollars |
-        | R² | 0.33 | Proportion of variance explained by the model |
-        | MAPE | 52.69% | Average percentage error |
+        | RMSE | 3055.91 | Average prediction error in dollars |
+        | MAE | 1685.96 | Average absolute prediction error in dollars |
+        | R² | 0.12 | Proportion of variance explained by the model |
+        | MAPE | 260.59% | Average percentage error |
 
-        The model explains approximately 32.7% of the variance in future claims, providing meaningful predictive power for business decisions.
+        The model explains approximately 12.1% of the variance in future claims, providing meaningful predictive power for business decisions.
 
 
         ## Key Predictors
@@ -54,7 +54,7 @@
 
         **High-Risk Customer Profile:**
 
-        - Approximately 49 customers (25.0% of the portfolio) are identified as high-risk
+        - Approximately 13 customers (26.0% of the portfolio) are identified as high-risk
         - These customers are predicted to have significantly higher claiming frequency and severity
         - Targeted intervention strategies for this segment could include proactive outreach, risk management consultations, or adjusted pricing
 
@@ -102,7 +102,7 @@
 
         Based on our analysis, implementing the enhanced model and recommended actions could result in:
 
-        - Potential savings from targeted interventions: $12149.97
-        - Improved premium alignment resulting in average profitability of $-388.10 per member
-        - Percentage of profitable members after risk adjustment: 31.6%
+        - Potential savings from targeted interventions: $11448.71
+        - Improved premium alignment resulting in average profitability of $-2097.24 per member
+        - Percentage of profitable members after risk adjustment: 12.0%
         

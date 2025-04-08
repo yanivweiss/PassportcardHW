@@ -1,0 +1,6 @@
+Member_ID,ServiceDate,TotPaymentUSD,ServiceType
+M001,2021-01-01,100.0,Medical
+M001,2021-01-02,200.0,Pharmacy
+M002,2021-01-03,50.0,Medical
+M003,2021-01-04,300.0,Dental
+M004,2021-01-05,150.0,Vision
