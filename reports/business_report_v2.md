@@ -26,19 +26,28 @@
 
         | Metric | Value | Interpretation |
         |--------|-------|----------------|
-        | RMSE | 3055.91 | Average prediction error in dollars |
-        | MAE | 1685.96 | Average absolute prediction error in dollars |
-        | R² | 0.12 | Proportion of variance explained by the model |
-        | MAPE | 260.59% | Average percentage error |
+        | RMSE | 2212.88 | Average prediction error in dollars |
+        | MAE | 173.20 | Average absolute prediction error in dollars |
+        | R² | 0.21 | Proportion of variance explained by the model |
+        | MAPE | 63.05% | Average percentage error |
 
-        The model explains approximately 12.1% of the variance in future claims, providing meaningful predictive power for business decisions.
+        The model explains approximately 20.9% of the variance in future claims, providing meaningful predictive power for business decisions.
 
 
         ## Key Predictors
 
         The most influential factors in predicting future claims are:
         
-- Feature importance data is available but column names could not be matched.
+- **future_6m_claim_count**: 0.5038
+- **TotPaymentUSD_max_90d**: 0.0534
+- **days_since_last_claim**: 0.0219
+- **TotPaymentUSD_sum_90d**: 0.0173
+- **TotPaymentUSD_mean_90d**: 0.0144
+- **TotPaymentUSD_mean_365d**: 0.0109
+- **policy_duration_days**: 0.0084
+- **TotPaymentUSD_sum_365d**: 0.0082
+- **policy_duration_frequency_interaction**: 0.0078
+- **pregnancy_and_childbirth_amount_365d**: 0.0071
 
         These findings suggest that historical claiming patterns and customer demographics are the strongest predictors of future claiming behavior.
 
@@ -54,7 +63,7 @@
 
         **High-Risk Customer Profile:**
 
-        - Approximately 13 customers (26.0% of the portfolio) are identified as high-risk
+        - Approximately 4620 customers (24.3% of the portfolio) are identified as high-risk
         - These customers are predicted to have significantly higher claiming frequency and severity
         - Targeted intervention strategies for this segment could include proactive outreach, risk management consultations, or adjusted pricing
 
@@ -102,7 +111,7 @@
 
         Based on our analysis, implementing the enhanced model and recommended actions could result in:
 
-        - Potential savings from targeted interventions: $11448.71
-        - Improved premium alignment resulting in average profitability of $-2097.24 per member
-        - Percentage of profitable members after risk adjustment: 12.0%
+        - Potential savings from targeted interventions: $1101001.47
+        - Improved premium alignment resulting in average profitability of $-188.99 per member
+        - Percentage of profitable members after risk adjustment: 60.5%
         
